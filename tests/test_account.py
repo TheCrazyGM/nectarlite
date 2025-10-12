@@ -234,13 +234,13 @@ def test_account_get_rc_info_and_caching():
 
     info = account.get_rc_info()
     api.call.assert_called_once_with(
-        "rc_api", "find_rc_accounts", [{"accounts": ["testaccount"]}]
+        "rc_api", "find_rc_accounts", {"accounts": ["testaccount"]}
     )
     assert info is account.rc_info
     assert info["max_mana"] == 200000
     assert info["last_mana"] == 100000
     assert info["current_mana"] >= 100000
-    assert 0 <= account.rc <= 100
+    assert account.rc is not None and 0 <= account.rc <= 100
 
     api.call.reset_mock()
     cached = account.get_rc_info()
