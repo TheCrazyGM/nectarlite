@@ -131,7 +131,7 @@ class Follow(Operation):
 
     def __init__(self, follower, following, what=["blog"], api=None):
         """Initialize a Follow operation.
-        
+
         :param str follower: The account that is following.
         :param str following: The account to follow.
         :param list what: Action to perform ["blog"] for follow, [] for unfollow, ["ignore"] for ignore.
@@ -141,29 +141,21 @@ class Follow(Operation):
         self.following = following
         self.what = what
         self.api = api
-        
+
         # Create the JSON payload for the follow operation
-        json_data = json.dumps([
-            "follow", 
-            {
-                "follower": follower,
-                "following": following,
-                "what": what
-            }
-        ])
-        
+        json_data = json.dumps(
+            ["follow", {"follower": follower, "following": following, "what": what}]
+        )
+
         # Create the underlying CustomJson operation
         self.custom_json = CustomJson(
-            id="follow",
-            json_data=json_data,
-            required_posting_auths=[follower],
-            api=api
+            id="follow", json_data=json_data, required_posting_auths=[follower], api=api
         )
 
     def to_dict(self):
         """Return the operation as a dictionary."""
         return self.custom_json.to_dict()
-    
+
     def __bytes__(self):
         """Return the binary representation of the operation."""
         return bytes(self.custom_json)

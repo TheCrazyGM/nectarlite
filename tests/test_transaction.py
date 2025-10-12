@@ -88,18 +88,20 @@ class TestFollowOperation(unittest.TestCase):
         follower = "alice"
         following = "bob"
         what = ["blog"]
-        
+
         follow_op = Follow(follower, following, what)
-        
+
         # Check that the operation type is custom_json
         self.assertEqual(follow_op.custom_json.op_name, "custom_json")
-        
+
         # Check that the ID is 'follow'
         self.assertEqual(follow_op.custom_json.params["id"], "follow")
-        
+
         # Check that posting auth is set correctly
-        self.assertEqual(follow_op.custom_json.params["required_posting_auths"], [follower])
-        
+        self.assertEqual(
+            follow_op.custom_json.params["required_posting_auths"], [follower]
+        )
+
         # Parse and check the JSON payload
         json_data = json.loads(follow_op.custom_json.params["json"])
         self.assertEqual(json_data[0], "follow")
@@ -112,9 +114,9 @@ class TestFollowOperation(unittest.TestCase):
         follower = "alice"
         following = "bob"
         what = []  # Empty list means unfollow
-        
+
         unfollow_op = Follow(follower, following, what)
-        
+
         json_data = json.loads(unfollow_op.custom_json.params["json"])
         self.assertEqual(json_data[1]["what"], [])
 
@@ -123,9 +125,9 @@ class TestFollowOperation(unittest.TestCase):
         follower = "alice"
         following = "bob"
         what = ["ignore"]  # 'ignore' means mute
-        
+
         ignore_op = Follow(follower, following, what)
-        
+
         json_data = json.loads(ignore_op.custom_json.params["json"])
         self.assertEqual(json_data[1]["what"], ["ignore"])
 
