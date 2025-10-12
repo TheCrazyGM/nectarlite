@@ -71,23 +71,33 @@ for vote in listener.on("vote"):
 
 ### Creating and Broadcasting a Transfer with an Encrypted Memo
 
+Set the `ACTIVE_WIF` and `MEMO_WIF` environment variables before running the example:
+
+```bash
+export ACTIVE_WIF="5J..."
+export MEMO_WIF="5J..."
+```
+
 ```python
+import os
+
 from nectarlite import Account, Api, Memo, Transaction, Transfer, Wallet
 
 # 1. Setup
-api = Api()
+api = Api(nodes="https://api.hive.blog")
 wallet = Wallet()
 
-# Add your private keys to the in-memory wallet
-# IMPORTANT: In a real application, load these securely
-sender_active_wif = "5J..."
-sender_memo_wif = "5J..."
-wallet.add_key("your-sender-account", "active", sender_active_wif)
-wallet.add_key("your-sender-account", "memo", sender_memo_wif)
+sender_account = "your-sender-account"
+recipient_account = "recipient-account"
+sender_active_wif = os.environ["ACTIVE_WIF"]
+sender_memo_wif = os.environ["MEMO_WIF"]
+
+wallet.add_key(sender_account, "active", sender_active_wif)
+wallet.add_key(sender_account, "memo", sender_memo_wif)
 
 # 2. Create the Memo Object and Encrypt
-from_account = Account("your-sender-account", api=api)
-to_account = Account("recipient-account", api=api)
+from_account = Account(sender_account, api=api)
+to_account = Account(recipient_account, api=api)
 memo = Memo(from_account, to_account, wallet, api)
 encrypted_memo = memo.encrypt("This is a secret message!")
 
@@ -95,8 +105,8 @@ encrypted_memo = memo.encrypt("This is a secret message!")
 tx = Transaction(api=api)
 tx.append_op(
     Transfer(
-        frm="your-sender-account",
-        to="recipient-account",
+        frm=from_account.name,
+        to=to_account.name,
         amount="0.001",
         asset="HIVE",
         memo=encrypted_memo,

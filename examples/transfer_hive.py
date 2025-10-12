@@ -1,35 +1,50 @@
-from nectarlite import Api, Transaction, Transfer, Wallet
+import os
 
-nodes = ["https://api.hive.blog", "https://api.syncad.com"]
-api = Api(nodes)
+from nectarlite import Account, Api, Memo, Transaction, Transfer, Wallet
 
-# Create wallet and load your key
-wallet = Wallet()
-# !!! WARNING: Replace with your actual WIF (active key recommended for transfers) !!!
-# !!! Do NOT commit real keys to git! Use env vars or input in production.        !!!
-wallet.add_key("your_account_name", "active", "5J...")  # Your WIF here
+# Set these environment variables before running the script:
+#   export ACTIVE_WIF="5J..."
+#   export MEMO_WIF="5J..."
 
-# Replace with details
-from_account = "your_account_name"
-to_account = "recipient_account"
-amount_to_transfer = "0.001"
-asset_symbol = "HIVE"
-memo_text = "Test transfer using Nectarlite Wallet!"
+SENDER_ACCOUNT = "your-sender-account"
+RECIPIENT_ACCOUNT = "recipient-account"
 
-try:
+
+def main():
+    sender_active_wif = os.environ.get("ACTIVE_WIF")
+    sender_memo_wif = os.environ.get("MEMO_WIF")
+
+    if not sender_active_wif or not sender_memo_wif:
+        raise SystemExit("Please set ACTIVE_WIF and MEMO_WIF environment variables")
+
+    api = Api(nodes="https://api.hive.blog")
+    wallet = Wallet()
+
+    wallet.add_key(SENDER_ACCOUNT, "active", sender_active_wif)
+    wallet.add_key(SENDER_ACCOUNT, "memo", sender_memo_wif)
+
+    from_account = Account(SENDER_ACCOUNT, api=api)
+    to_account = Account(RECIPIENT_ACCOUNT, api=api)
+    memo = Memo(from_account, to_account, wallet, api)
+    encrypted_memo = memo.encrypt("This is a secret message!")
+
     tx = Transaction(api=api)
     tx.append_op(
         Transfer(
-            frm=from_account,
-            to=to_account,
-            amount=amount_to_transfer,
-            asset=asset_symbol,
-            memo=memo_text,
+            frm=from_account.name,
+            to=to_account.name,
+            amount="0.001",
+            asset="HIVE",
+            memo=encrypted_memo,
         )
     )
-    # Sign using wallet
-    wallet.sign(tx, from_account, "active")
+
+    wallet.sign(tx, SENDER_ACCOUNT, "active")
+    # or
+    # tx.sign(sender_active_wif)
     response = tx.broadcast()
     print(f"Transaction Broadcast Response: {response}")
-except Exception as e:
-    print(f"Error broadcasting transaction: {e}")
+
+
+if __name__ == "__main__":
+    main()
