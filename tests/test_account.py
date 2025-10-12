@@ -149,3 +149,31 @@ def test_account_unignore_method(mock_follow, mock_transaction, account_with_api
     
     # Verify the transaction was returned
     assert tx == mock_transaction_instance
+
+
+@patch("nectarlite.account.HAF")
+def test_account_get_reputation(mock_haf):
+    mock_haf_instance = mock_haf.return_value
+    mock_haf_instance.reputation.return_value = {"reputation": 987654}
+
+    account = Account("testaccount")
+
+    value1 = account.get_reputation()
+
+    mock_haf.assert_called_once_with()
+    mock_haf_instance.reputation.assert_called_once_with("testaccount")
+    assert value1 == 987654
+
+    # Cached access via property should not trigger an additional fetch
+    value2 = account.reputation
+    assert value2 == 987654
+    mock_haf_instance.reputation.assert_called_once_with("testaccount")
+
+    # Refresh should trigger a new fetch
+    mock_haf_instance.reputation.return_value = {"reputation": 123456}
+    value3 = account.get_reputation(refresh=True)
+    assert value3 == 123456
+    assert mock_haf_instance.reputation.call_count == 2
+
+    # Alias property mirrors reputation
+    assert account.rep == 123456

@@ -13,7 +13,7 @@ This document outlines the development plan for `nectarlite`, a lightweight Pyth
 
 ## Project Structure
 
-```
+```text
 nectarlite/
 ├── __init__.py
 ├── api.py
@@ -69,11 +69,11 @@ Inspired by hive-nectar, add select common features for easier script-writing.
 - [x] **Key Utilities:** Helper functions for WIF keys and memo encryption/decryption.
 - [x] **API Robustness:** Enhance `Api` with basic node failover.
 
-- [ ] **Common Operation Helpers:** Pre-built classes/methods for frequent Hive actions:
+- [x] **Common Operation Helpers:** Pre-built classes/methods for frequent Hive actions:
   - [x] `TransferOp`: HIVE/HBD transfers with optional encrypted memo.
   - [x] `VoteOp`: Up/down-vote on content with percent weight.
   - [x] `CommentOp`: Post articles, comments, or replies.
-  - [ ] `FollowOp`: See extended version in Phase 5.
+  - [x] `FollowOp`: See extended version in Phase 5. (See `examples/account_follow.py` for usage.)
 
 - [x] **Examples:** Expand `examples/` with scripts for all major features.
 
@@ -82,7 +82,7 @@ Inspired by hive-nectar, add select common features for easier script-writing.
 - [x] **Event Listener:** Implement a real-time event listener for streaming blocks and operations.
 
 - [ ] **Common Operation Helpers (Extended):** Inspired by lighthive:
-  - [ ] `FollowOp`: Follow/unfollow/ignore/unignore accounts.
+  - [x] `FollowOp`: Follow/unfollow/ignore/unignore accounts (implemented via `Account` helpers and supporting tests/examples).
   - [ ] **Account Helper Methods:** Add utility methods for:
     - [ ] Reputation calculation
     - [ ] Voting power calculation with regeneration

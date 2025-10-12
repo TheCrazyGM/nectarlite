@@ -1,6 +1,7 @@
 """Account class for interacting with Hive accounts."""
 
 from .amount import Amount
+from .haf import HAF
 from .transaction import Follow, Transaction
 
 class Account:
@@ -15,6 +16,7 @@ class Account:
         self.name = account_name
         self.api = api
         self._data = {}
+        self._reputation = None
 
         # Properties that should be cast to Amount objects
         self._amount_fields = {
@@ -151,3 +153,39 @@ class Account:
         """
         # Unignore is the same as unfollow in the Hive blockchain
         return self.unfollow(account_to_unignore)
+
+    def get_reputation(self, haf_client=None, refresh=False):
+        """Return the account reputation fetched from the HAF API.
+
+        :param HAF haf_client: Optional pre-configured HAF client to use.
+        :param bool refresh: If True, force a fresh fetch even if cached.
+        :return: The raw reputation value or ``None`` if unavailable.
+        """
+
+        if self._reputation is not None and not refresh:
+            return self._reputation
+
+        client = haf_client or HAF()
+        response = client.reputation(self.name)
+
+        if isinstance(response, dict):
+            reputation_value = response.get("reputation")
+        elif isinstance(response, (int, float)):
+            reputation_value = response
+        else:
+            reputation_value = None
+
+        self._reputation = reputation_value
+        return self._reputation
+
+    @property
+    def reputation(self):
+        """Cached reputation property."""
+
+        return self.get_reputation()
+
+    @property
+    def rep(self):
+        """Alias for :pyattr:`reputation`."""
+
+        return self.reputation
