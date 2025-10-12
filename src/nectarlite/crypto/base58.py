@@ -44,30 +44,34 @@ def base58encode(hexstring):
     return (BASE58_ALPHABET[0:1] * leading_zeroes_count + res).decode("ascii")
 
 
-def ripemd160(s):
-    """RIPEMD160 hash."""
-    ripemd160 = hashlib.new("ripemd160")
-    ripemd160.update(unhexlify(s))
-    return ripemd160.digest()
+def ripemd160(s: bytes) -> bytes:
+    """RIPEMD160 hash of raw bytes."""
+    h = hashlib.new("ripemd160")
+    h.update(s)
+    return h.digest()
 
 
-def doublesha256(s):
-    """Double SHA256 hash."""
+def doublesha256(s: str) -> bytes:
+    """Double SHA256 hash of a hex string."""
     return hashlib.sha256(hashlib.sha256(unhexlify(s)).digest()).digest()
 
 
-def gph_base58_check_encode(s):
-    """Graphene-style Base58 check encoding."""
-    checksum = ripemd160(s)[:4]
-    result = s + hexlify(checksum).decode("ascii")
-    return base58encode(result)
+def gph_base58_check_encode(s: str) -> str:
+    """Graphene-style Base58 check encoding from a hex string."""
+    checksum = doublesha256(s)[:4]
+    result_hex = s + hexlify(checksum).decode("ascii")
+    return base58encode(result_hex)
 
 
-def gph_base58_check_decode(s):
-    """Graphene-style Base58 check decoding."""
-    s = unhexlify(base58decode(s))
-    dec = hexlify(s[:-4]).decode("ascii")
-    checksum = ripemd160(dec)[:4]
-    if not (s[-4:] == checksum):
+def gph_base58_check_decode(s: str) -> str:
+    """Graphene-style Base58 check decoding to a hex string."""
+    decoded_hex = base58decode(s)
+    decoded_bytes = unhexlify(decoded_hex)
+    payload_hex = decoded_hex[:-8]
+    original_checksum = decoded_bytes[-4:]
+
+    calculated_checksum = doublesha256(payload_hex)[:4]
+
+    if not (original_checksum == calculated_checksum):
         raise AssertionError("Invalid checksum")
-    return dec
+    return payload_hex

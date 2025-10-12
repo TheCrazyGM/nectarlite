@@ -13,6 +13,7 @@ __all__ = [
     "Asset",
     "Account",
     "Block",
+    "Wallet",
     "NectarliteException",
     "NodeError",
     "MissingKeyError",
@@ -33,3 +34,4 @@ from .exceptions import (
     TransactionError,
 )
 from .transaction import CustomJson, Operation, Transaction, Transfer, Vote
+from .wallet import Wallet

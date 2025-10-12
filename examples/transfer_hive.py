@@ -1,19 +1,20 @@
-from nectarlite import Api, Transaction, Transfer
+from nectarlite import Api, Transaction, Transfer, Wallet
 
 nodes = ["https://api.hive.blog", "https://api.openhive.network"]
 api = Api(nodes)
 
-# !!! WARNING: Replace with your actual private key (WIF format) !!!
-# !!!          Do NOT use your owner key for this example.       !!!
-# !!!          Use an active or posting key with limited funds.  !!!
-private_key = "5J..."
+# Create wallet and load your key
+wallet = Wallet()
+# !!! WARNING: Replace with your actual WIF (active key recommended for transfers) !!!
+# !!! Do NOT commit real keys to git! Use env vars or input in production.        !!!
+wallet.add_key("your_account_name", "active", "5J...")  # Your WIF here
 
-# Replace with your account name and recipient
+# Replace with details
 from_account = "your_account_name"
 to_account = "recipient_account"
 amount_to_transfer = "0.001"
 asset_symbol = "HIVE"
-memo_text = "Test transfer from nectarlite"
+memo_text = "Test transfer using Nectarlite Wallet!"
 
 try:
     tx = Transaction(api=api)
@@ -26,7 +27,8 @@ try:
             memo=memo_text,
         )
     )
-    tx.sign(private_key)
+    # Sign using wallet
+    wallet.sign(tx, from_account, "active")
     response = tx.broadcast()
     print(f"Transaction Broadcast Response: {response}")
 except Exception as e:

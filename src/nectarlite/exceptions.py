@@ -31,3 +31,9 @@ class TransactionError(NectarliteException):
     """Raised for errors related to transaction building and signing."""
 
     pass
+
+
+class ValueError(NectarliteException):
+    """Raised when a value is not valid."""
+
+    pass
