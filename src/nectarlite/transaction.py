@@ -243,8 +243,14 @@ class Transaction:
         self.ref_block_num = (head_block_number - 3) & 0xFFFF
 
         block_num = head_block_number - 2
-        block_response = self.api.call("block_api", "get_block", {"block_num": block_num})
-        block_data = block_response.get("block") if isinstance(block_response, dict) else block_response
+        block_response = self.api.call(
+            "block_api", "get_block", {"block_num": block_num}
+        )
+        block_data = (
+            block_response.get("block")
+            if isinstance(block_response, dict)
+            else block_response
+        )
         if not block_data or "previous" not in block_data:
             raise TransactionError("Unable to fetch reference block")
 
@@ -252,7 +258,9 @@ class Transaction:
         self.ref_block_prefix = int.from_bytes(previous_block_bytes[4:8], "little")
 
         head_block_time = props["time"]
-        expiration_dt = datetime.strptime(head_block_time, "%Y-%m-%dT%H:%M:%S") + timedelta(seconds=30)
+        expiration_dt = datetime.strptime(
+            head_block_time, "%Y-%m-%dT%H:%M:%S"
+        ) + timedelta(seconds=30)
         self.expiration_override = expiration_dt.strftime("%Y-%m-%dT%H:%M:%S")
 
     def _construct_tx(self):

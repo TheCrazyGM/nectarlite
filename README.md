@@ -12,6 +12,7 @@ Nectarlite is a lightweight Python library for interacting with the Hive blockch
 - **HAF Integration:** Access to the Hive Account Feed (HAF) for advanced queries.
 - **Memo Encryption:** Encrypt and decrypt memos for private communication.
 - **Real-Time Stream:** Stream blocks and operations as they happen.
+- **Read-Only Helpers:** Convenience wrappers for popular Hive APIs (dynamic global props, feed history, reward funds, market ticker, ranked posts).
 
 ## Installation
 
@@ -118,3 +119,23 @@ tx.sign(sender_active_wif) # Sign with the active key
 response = tx.broadcast()
 print(f"Transaction Broadcast Response: {response}")
 ```
+
+### Querying Chain Insights with Helpers
+
+```python
+from nectarlite import Api
+from nectarlite.helpers import DynamicGlobalProperties, get_market_ticker
+
+api = Api(["https://api.hive.blog"])  # or comma-separated via HIVE_NODES env var
+
+dgp = DynamicGlobalProperties(api)
+print("Head block:", dgp.head_block_number)
+
+ticker = get_market_ticker(api)
+if ticker:
+    print("Latest HBD/HIVE price:", ticker.get("latest"))
+else:
+    print("Ticker unavailable on current node")
+```
+
+See `examples/helpers_usage.py` for a full walkthrough leveraging reward funds, RC metrics, ranked posts, and more.

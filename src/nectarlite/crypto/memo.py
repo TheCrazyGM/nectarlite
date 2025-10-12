@@ -61,7 +61,9 @@ def _init_aes(shared_secret_hex, nonce):
     encryption_key = hashlib.sha512(nonce_bytes + ss).hexdigest()
     key = unhexlify(encryption_key[0:64])
     iv = unhexlify(encryption_key[64:96])
-    check = struct.unpack_from("<I", hashlib.sha256(unhexlify(encryption_key)).digest())[0]
+    check = struct.unpack_from(
+        "<I", hashlib.sha256(unhexlify(encryption_key)).digest()
+    )[0]
     return AES.new(key, AES.MODE_CBC, iv), check
 
 

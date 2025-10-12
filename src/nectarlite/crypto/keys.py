@@ -33,7 +33,9 @@ class PublicKey:
         if isinstance(key, ec.EllipticCurvePublicKey):
             self._key = key
         elif isinstance(key, (bytes, bytearray)):
-            self._key = ec.EllipticCurvePublicKey.from_encoded_point(ec.SECP256K1(), key)
+            self._key = ec.EllipticCurvePublicKey.from_encoded_point(
+                ec.SECP256K1(), key
+            )
         elif isinstance(key, str):
             key_str = key
             if key_str.startswith(prefix):

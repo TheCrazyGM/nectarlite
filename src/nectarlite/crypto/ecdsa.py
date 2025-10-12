@@ -100,7 +100,11 @@ def sign(message, wif):
 
     for rec_id in range(4):
         recovered = _recover_public_key(e, r, s, rec_id)
-        if recovered and recovered.public_bytes(Encoding.X962, PublicFormat.CompressedPoint) == pub_compressed:
+        if (
+            recovered
+            and recovered.public_bytes(Encoding.X962, PublicFormat.CompressedPoint)
+            == pub_compressed
+        ):
             return bytes([27 + 4 + rec_id]) + canonical
 
     raise InvalidKeyFormatError("Could not recover public key from signature")
@@ -114,7 +118,9 @@ def verify(message, signature, public_key):
     try:
         pub_hex = gph_base58_check_decode(public_key[3:])
         pub_bytes = bytes.fromhex(pub_hex)
-        verifying_key = ec.EllipticCurvePublicKey.from_encoded_point(ec.SECP256K1(), pub_bytes)
+        verifying_key = ec.EllipticCurvePublicKey.from_encoded_point(
+            ec.SECP256K1(), pub_bytes
+        )
     except Exception as exc:
         raise InvalidKeyFormatError(str(exc)) from exc
 

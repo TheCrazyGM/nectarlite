@@ -87,6 +87,8 @@ Inspired by hive-nectar, add select common features for easier script-writing.
     - [x] Reputation calculation
     - [x] Voting power calculation with regeneration
     - [x] Resource Credits (RC) information
+  - [x] Read-only API helpers covering dynamic globals, feed history, reward funds, RC metrics, market ticker, ranked posts.
+  - [ ] Broaden helper coverage to additional endpoints (witness info, proposal feeds, market depth).
 
 - [ ] **Advanced Node Management:** Enhance `Api` with:
   - [ ] Latency testing and intelligent node selection

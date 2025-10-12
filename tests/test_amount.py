@@ -29,9 +29,7 @@ class TestAmount(unittest.TestCase):
     def test_bytes(self):
         """Test the __bytes__ method."""
         amount = Amount(1.000, "HIVE", api=self.api)
-        expected_bytes = (
-            struct.pack("<q", 1000) + bytes(Uint8(3)) + b"STEEM\x00\x00"
-        )
+        expected_bytes = struct.pack("<q", 1000) + bytes(Uint8(3)) + b"STEEM\x00\x00"
         self.assertEqual(bytes(amount), expected_bytes)
 
     def test_str(self):

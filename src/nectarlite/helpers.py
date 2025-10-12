@@ -1,0 +1,261 @@
+"""Convenience helpers for common read-only Hive RPC calls."""
+
+from typing import Any, Dict, Iterable, List, Optional
+
+from .api import Api
+from .exceptions import NodeError
+
+
+class _LazyResource:
+    """Base helper that lazily fetches JSON data on attribute access."""
+
+    def __init__(self, api: Api):
+        self.api = api
+        self._data: Any = None
+
+    def _fetch(self) -> Any:  # pragma: no cover - overridden in subclasses
+        raise NotImplementedError
+
+    def refresh(self) -> "_LazyResource":
+        self._data = self._fetch()
+        return self
+
+    def _ensure(self) -> Any:
+        if self._data is None:
+            self.refresh()
+        return self._data
+
+    def as_dict(self) -> Dict[str, Any]:
+        data = self._ensure()
+        if isinstance(data, dict):
+            return dict(data)
+        raise TypeError("Resource payload is not a mapping")
+
+    def __getattr__(self, item: str) -> Any:
+        if item in {"api", "_data"}:
+            return super().__getattribute__(item)
+        data = self._ensure()
+        if isinstance(data, dict) and item in data:
+            return data[item]
+        raise AttributeError(f"'{self.__class__.__name__}' has no attribute '{item}'")
+
+    def __getitem__(self, item: str) -> Any:
+        data = self._ensure()
+        if isinstance(data, dict):
+            return data[item]
+        raise TypeError("Resource payload does not support indexing")
+
+
+class DynamicGlobalProperties(_LazyResource):
+    """Wrapper for ``condenser_api.get_dynamic_global_properties``."""
+
+    def _fetch(self) -> Dict[str, Any]:
+        return self.api.call("condenser_api", "get_dynamic_global_properties", [])
+
+
+class ChainProperties(_LazyResource):
+    """Wrapper for ``condenser_api.get_chain_properties``."""
+
+    def _fetch(self) -> Dict[str, Any]:
+        return self.api.call("condenser_api", "get_chain_properties", [])
+
+
+class WitnessSchedule(_LazyResource):
+    """Wrapper for ``condenser_api.get_witness_schedule``."""
+
+    def _fetch(self) -> Dict[str, Any]:
+        return self.api.call("condenser_api", "get_witness_schedule", [])
+
+
+class FeedHistory(_LazyResource):
+    """Wrapper for ``condenser_api.get_feed_history``."""
+
+    def _fetch(self) -> Dict[str, Any]:
+        return self.api.call("condenser_api", "get_feed_history", [])
+
+
+class RewardFunds(_LazyResource):
+    """Wrapper for ``database_api.get_reward_funds``."""
+
+    _FALLBACK_FUNDS = ("post", "comment")
+
+    def _fetch(self) -> List[Dict[str, Any]]:
+        funds = self._fetch_database_reward_funds()
+        if funds:
+            return funds
+        return self._fetch_condenser_reward_funds()
+
+    def _fetch_database_reward_funds(self) -> List[Dict[str, Any]]:
+        try:
+            response = self.api.call("database_api", "get_reward_funds", {})
+        except NodeError:
+            return []
+
+        if isinstance(response, dict):
+            funds = response.get("funds")
+            if isinstance(funds, list):
+                return funds
+            return []
+        if isinstance(response, list):
+            return response
+        return []
+
+    def _fetch_condenser_reward_funds(self) -> List[Dict[str, Any]]:
+        results: List[Dict[str, Any]] = []
+        for name in self._FALLBACK_FUNDS:
+            try:
+                response = self.api.call("condenser_api", "get_reward_fund", [name])
+            except NodeError:
+                # condenser endpoint unavailable across nodes
+                return results
+            except Exception:
+                continue
+
+            normalized = self._normalize_fund_response(response, name)
+            if normalized:
+                results.append(normalized)
+        return results
+
+    @staticmethod
+    def _normalize_fund_response(response: Any, name: str) -> Optional[Dict[str, Any]]:
+        if isinstance(response, dict):
+            fund = dict(response)
+            fund.setdefault("name", name)
+            return fund
+        if isinstance(response, list):
+            # Some nodes may return [fund_dict]
+            if response and isinstance(response[0], dict):
+                fund = dict(response[0])
+                fund.setdefault("name", name)
+                return fund
+        if isinstance(response, str):
+            return {"name": name, "reward_balance": response}
+        return None
+
+    def _ensure(self) -> List[Dict[str, Any]]:
+        if self._data is None:
+            self.refresh()
+        return self._data
+
+    def as_list(self) -> List[Dict[str, Any]]:
+        return list(self._ensure())
+
+    def find(self, name: str) -> Optional[Dict[str, Any]]:
+        for fund in self._ensure():
+            if isinstance(fund, dict) and fund.get("name") == name:
+                return fund
+        return None
+
+
+class MedianHistoryPrice(_LazyResource):
+    """Wrapper for ``condenser_api.get_current_median_history_price``."""
+
+    def _fetch(self) -> Dict[str, Any]:
+        return self.api.call("condenser_api", "get_current_median_history_price", [])
+
+
+def get_block(api: Api, block_num: int) -> Optional[Dict[str, Any]]:
+    """Return the block payload for ``block_num`` using ``block_api.get_block``."""
+
+    response = api.call("block_api", "get_block", {"block_num": block_num})
+    if isinstance(response, dict):
+        return response.get("block") or response.get("result")
+    return None
+
+
+def get_ops_in_block(api: Api, block_num: int, virtual_only: bool = False) -> List[Any]:
+    """Return operations for a block via ``condenser_api.get_ops_in_block``."""
+
+    response = api.call(
+        "condenser_api",
+        "get_ops_in_block",
+        [block_num, virtual_only],
+    )
+    if isinstance(response, list):
+        return response
+    if isinstance(response, dict):
+        return response.get("ops", [])
+    return []
+
+
+def get_account_history(
+    api: Api,
+    account: str,
+    start: int = -1,
+    limit: int = 100,
+) -> List[Any]:
+    """Return account history using ``condenser_api.get_account_history``."""
+
+    response = api.call("condenser_api", "get_account_history", [account, start, limit])
+    if isinstance(response, list):
+        return response
+    if isinstance(response, dict):
+        return response.get("history", [])
+    return []
+
+
+def get_rc_accounts(api: Api, accounts: Iterable[str]) -> List[Dict[str, Any]]:
+    """Return RC metrics for the provided ``accounts`` using ``rc_api.find_rc_accounts``."""
+
+    response = api.call("rc_api", "find_rc_accounts", {"accounts": list(accounts)})
+    if isinstance(response, dict):
+        return response.get("rc_accounts") or response.get("result") or []
+    if isinstance(response, list):
+        return response
+    return []
+
+
+def get_market_ticker(api: Api) -> Dict[str, Any]:
+    """Return the market ticker via ``market_history_api.get_ticker``."""
+
+    try:
+        response = api.call("market_history_api", "get_ticker", {})
+    except NodeError:
+        return {}
+    return response or {}
+
+
+def get_market_volume(api: Api) -> Dict[str, Any]:
+    """Return 24h volume via ``market_history_api.get_volume""."""
+
+    try:
+        response = api.call("market_history_api", "get_volume", {})
+    except NodeError:
+        return {}
+    return response or {}
+
+
+def get_ranked_posts(
+    api: Api,
+    sort: str = "trending",
+    tag: Optional[str] = None,
+    limit: int = 20,
+) -> List[Dict[str, Any]]:
+    """Fetch ranked posts using ``bridge.get_ranked_posts``."""
+
+    payload = {"sort": sort, "limit": limit}
+    if tag:
+        payload["tag"] = tag
+    response = api.call("bridge", "get_ranked_posts", payload)
+    if isinstance(response, dict):
+        return response.get("result") or response.get("posts") or []
+    if isinstance(response, list):
+        return response
+    return []
+
+
+__all__ = [
+    "DynamicGlobalProperties",
+    "ChainProperties",
+    "WitnessSchedule",
+    "FeedHistory",
+    "RewardFunds",
+    "MedianHistoryPrice",
+    "get_block",
+    "get_ops_in_block",
+    "get_account_history",
+    "get_rc_accounts",
+    "get_market_ticker",
+    "get_market_volume",
+    "get_ranked_posts",
+]
