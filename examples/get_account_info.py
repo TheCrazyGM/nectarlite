@@ -1,14 +1,16 @@
-from nectarlite import Account, Api
+#!/usr/bin/env python
 
+from nectarlite.api import Api
+from nectarlite.account import Account
+
+# Initialize the API
 nodes = ["https://api.hive.blog", "https://api.openhive.network"]
 api = Api(nodes)
 
-account_name = "thecrazygm"
-account = Account(account_name, api=api)
-account.refresh()
+# Get an account
+account = Account("thecrazygm", api=api)
 
+# The account data is automatically fetched when you access an attribute
 print(f"Account Name: {account.name}")
-print(f"Balance: {account['balance']}")
-print(f"Vesting Shares: {account['vesting_shares']}")
-for x in account:
-    print(f"{x}: {account[x]}")
+print(f"Balance: {account.balance}")
+print(f"Vesting Shares: {account.vesting_shares}")

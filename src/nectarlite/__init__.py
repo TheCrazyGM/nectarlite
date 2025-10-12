@@ -8,12 +8,14 @@ __all__ = [
     "Operation",
     "Transfer",
     "Vote",
+    "Comment",
     "CustomJson",
     "Amount",
     "Asset",
     "Account",
     "Block",
     "Wallet",
+    "HAF",
     "NectarliteException",
     "NodeError",
     "MissingKeyError",
@@ -26,6 +28,7 @@ from .amount import Amount
 from .api import Api
 from .asset import Asset
 from .block import Block
+from .comment import Comment
 from .exceptions import (
     InvalidKeyFormatError,
     MissingKeyError,
@@ -33,5 +36,7 @@ from .exceptions import (
     NodeError,
     TransactionError,
 )
-from .transaction import CustomJson, Operation, Transaction, Transfer, Vote
+from .haf import HAF
+from .transaction import CustomJson, Operation, Transaction, Transfer
+from .vote import Vote
 from .wallet import Wallet
