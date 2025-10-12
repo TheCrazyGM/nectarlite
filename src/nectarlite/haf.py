@@ -64,6 +64,10 @@ class HAF(object):
             endpoint = f"reputation-api/accounts/{account}/reputation"
             response = self._make_request(endpoint)
 
+            # Handle cases where the API returns a raw integer
+            if isinstance(response, int):
+                response = {"reputation": response, "account": account}
+
             log.debug(f"Retrieved reputation for account: {account}")
             return response
 
