@@ -2,9 +2,9 @@ from unittest.mock import Mock
 
 import pytest
 
-from nectarlite.comment import Comment
 from nectarlite.amount import Amount
 from nectarlite.api import Api
+from nectarlite.comment import Comment
 
 
 @pytest.fixture

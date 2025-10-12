@@ -21,11 +21,14 @@ nectarlite/
 ├── comment.py
 ├── vote.py
 ├── haf.py
+├── memo.py
 ├── transaction.py
 ├── chain.py
 ├── exceptions.py
 └── crypto/
     ├── __init__.py
+    ├── keys.py
+    ├── memo.py
     ├── aes.py
     ├── base58.py
     ├── bip32.py
@@ -64,7 +67,7 @@ nectarlite/
 
 ## Phase 3: Refinement and Testing
 
-- [x] **Unit Tests:** Write comprehensive unit tests for all components, including the new `Account`, `Comment`, `Vote`, and `HAF` classes.
+- [x] **Unit Tests:** Write comprehensive unit tests for all components, including the new `Account`, `Comment`, `Vote`, `HAF`, and `Memo` classes.
 - [x] **Documentation:** Write clear and concise documentation, including a `README.md` and example usage scripts.
 - [x] **Linting and Formatting:** Ensure the code adheres to PEP 8 and other best practices.
 
@@ -81,9 +84,9 @@ Inspired by hive-nectar, add select common features for easier script-writing (e
   - [x] `CommentOp`: Post articles, comments, or replies.
   - [ ] `FollowOp`: Follow/unfollow accounts.
 
-- [ ] **Key Utilities:** Helper functions in `crypto/` or `utils/`:
+- [x] **Key Utilities:** Helper functions in `crypto/` or `utils/`:
   - [x] Import/validate WIF keys.
-  - [ ] Memo encryption/decryption (using public/private keys).
+  - [x] Memo encryption/decryption (using public/private keys).
 
 - [x] **API Robustness:** Enhance `Api`:
   - [x] Node failover (try secondary nodes on failure).
@@ -91,4 +94,4 @@ Inspired by hive-nectar, add select common features for easier script-writing (e
 
 - [ ] **Validation:** Basic checks (e.g., valid account name format, amount precision).
 
-- [x] **Examples:** Expand `examples/` with new scripts for `Account`, `Comment`, `Vote`, and `HAF`.
+- [x] **Examples:** Expand `examples/` with new scripts for `Account`, `Comment`, `Vote`, `HAF`, and `Memo`.

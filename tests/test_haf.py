@@ -1,13 +1,14 @@
 from unittest.mock import patch
 
-import pytest
-
 from nectarlite.haf import HAF
 
 
 @patch("requests.request")
 def test_haf_reputation_dict_response(mock_request):
-    mock_request.return_value.json.return_value = {"reputation": 75, "account": "testaccount"}
+    mock_request.return_value.json.return_value = {
+        "reputation": 75,
+        "account": "testaccount",
+    }
     haf = HAF()
     response = haf.reputation("testaccount")
 

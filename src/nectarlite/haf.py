@@ -13,9 +13,7 @@ class HAF(object):
 
     DEFAULT_APIS = ["https://api.hive.blog", "https://api.syncad.com"]
 
-    def __init__(
-        self, api: Optional[str] = None, timeout: Optional[float] = None
-    ):
+    def __init__(self, api: Optional[str] = None, timeout: Optional[float] = None):
         """
         Initialize the HAF client.
 
@@ -27,7 +25,9 @@ class HAF(object):
         self._timeout = float(timeout) if timeout else 30.0
 
         if not self.api.startswith(("http://", "https://")):
-            raise ValueError(f"Invalid API URL: {self.api}. Must start with http:// or https://")
+            raise ValueError(
+                f"Invalid API URL: {self.api}. Must start with http:// or https://"
+            )
 
         self.api = self.api.rstrip("/")
 
@@ -44,7 +44,9 @@ class HAF(object):
 
         try:
             timeout = kwargs.pop("timeout", self._timeout)
-            response = requests.request(method, url, headers=headers, timeout=timeout, **kwargs)
+            response = requests.request(
+                method, url, headers=headers, timeout=timeout, **kwargs
+            )
             response.raise_for_status()
 
             return response.json()

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
+from nectarlite.account import Account
 from nectarlite.api import Api
 from nectarlite.comment import Comment
-from nectarlite.account import Account
 
 # Initialize the API
 nodes = ["https://api.hive.blog", "https://api.openhive.network"]
@@ -14,7 +14,9 @@ try:
     # Using the Account class to get recent posts
     account = Account("gtg", api=api)
     # The condenser_api call for get_discussions_by_blog is a bit complex, let's use a direct call
-    latest_post = api.call("condenser_api", "get_discussions_by_blog", [{"tag": "gtg", "limit": 1}])[0]
+    latest_post = api.call(
+        "condenser_api", "get_discussions_by_blog", [{"tag": "gtg", "limit": 1}]
+    )[0]
 
     author = latest_post["author"]
     permlink = latest_post["permlink"]
@@ -32,5 +34,6 @@ try:
 
 except Exception as e:
     print(f"An error occurred: {e}")
-    print("This might be due to a temporary API issue or if the @gtg account has no posts.")
-
+    print(
+        "This might be due to a temporary API issue or if the @gtg account has no posts."
+    )

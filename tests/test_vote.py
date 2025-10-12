@@ -2,8 +2,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from nectarlite.vote import Vote
 from nectarlite.api import Api
+from nectarlite.vote import Vote
 
 
 @pytest.fixture

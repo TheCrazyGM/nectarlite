@@ -1,6 +1,7 @@
 from typing import Dict, Optional
 
 from .crypto.base58 import gph_base58_check_decode
+from .crypto.keys import PrivateKey
 from .exceptions import InvalidKeyFormatError, MissingKeyError
 from .transaction import Transaction
 
@@ -12,17 +13,7 @@ class Wallet:
         self._keys: Dict[str, Dict[str, str]] = {}
 
     def add_key(self, account: str, role: str, wif: str) -> None:
-        """Add a private key for an account role.
-
-        Args:
-            account: Account name (e.g., "yourusername").
-            role: One of 'posting', 'active', or 'memo'.
-            wif: WIF private key string (starts with '5').
-
-        Raises:
-            ValueError: Invalid account, role, or format.
-            InvalidKeyFormatError: Malformed WIF.
-        """
+        """Add a private key for an account role."""
         if role not in ("posting", "active", "memo"):
             raise ValueError("Role must be 'posting', 'active', or 'memo'.")
         if not isinstance(account, str) or not account:
@@ -32,7 +23,7 @@ class Wallet:
 
         try:
             decoded = gph_base58_check_decode(wif)
-            if len(decoded) < 32:  # Basic payload check
+            if len(decoded) < 32:
                 raise InvalidKeyFormatError("Invalid WIF payload length.")
         except Exception:
             raise InvalidKeyFormatError("Invalid WIF format.")
@@ -51,17 +42,15 @@ class Wallet:
             return self._keys[account][role]
         return None
 
+    def get_private_key(self, account: str, role: str) -> Optional[PrivateKey]:
+        """Get a PrivateKey object for the account/role."""
+        wif = self.get_key(account, role)
+        if wif is None:
+            return None
+        return PrivateKey(gph_base58_check_decode(wif))
+
     def sign(self, transaction: Transaction, account: str, role: str) -> None:
-        """Sign the transaction using the specified account's role key.
-
-        Args:
-            transaction: The Transaction to sign.
-            account: Account name.
-            role: Role to use ('posting', 'active', or 'memo').
-
-        Raises:
-            MissingKeyError: If no key for account/role.
-        """
+        """Sign the transaction using the specified account's role key."""
         wif = self.get_key(account, role)
         if wif is None:
             raise MissingKeyError(f"No {role} key for account '{account}'")

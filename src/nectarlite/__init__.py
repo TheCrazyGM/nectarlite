@@ -11,6 +11,7 @@ __all__ = [
     "Comment",
     "CustomJson",
     "Amount",
+    "Memo",
     "Asset",
     "Account",
     "Block",
@@ -37,6 +38,7 @@ from .exceptions import (
     TransactionError,
 )
 from .haf import HAF
+from .memo import Memo
 from .transaction import CustomJson, Operation, Transaction, Transfer
 from .vote import Vote
 from .wallet import Wallet

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-from nectarlite.api import Api
 from nectarlite.account import Account
+from nectarlite.api import Api
 
 # Initialize the API
 nodes = ["https://api.hive.blog", "https://api.openhive.network"]

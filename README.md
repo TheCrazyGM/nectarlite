@@ -9,6 +9,7 @@ Nectarlite is a lightweight Python library for interacting with the Hive blockch
 - **Transaction Building & Signing:** Construct and sign Hive transactions.
 - **High-Level Abstractions:** Simple classes for Account, Comment, Vote, Asset, and Amount.
 - **HAF Integration:** Access to the Hive Account Feed (HAF) for advanced queries.
+- **Memo Encryption:** Encrypt and decrypt memos for private communication.
 
 ## Installation
 
@@ -45,16 +46,13 @@ print(f"Vesting Shares: {account.vesting_shares}")
 ```python
 from nectarlite import Comment, Vote
 
-# Get a comment
-comment = Comment(author="testauthor", permlink="test-permlink", api=api)
+# Get a comment (replace with a real author and permlink)
+comment = Comment(author="gtg", permlink="this-is-a-test-post", api=api)
 print(f"Title: {comment.title}")
-print(f"Author: {comment.author}")
-print(f"Pending Payout: {comment.pending_payout_value}")
 
-# Get a vote
-vote = Vote(voter="testvoter", author="testauthor", permlink="test-permlink", api=api)
+# Get a vote on that comment (replace with a real voter)
+vote = Vote(voter="somevoter", author="gtg", permlink="this-is-a-test-post", api=api)
 print(f"Voter: {vote.voter}")
-print(f"Weight: {vote.weight}")
 ```
 
 ### Using the HAF API
@@ -67,23 +65,46 @@ haf = HAF()
 # Get an account's reputation
 reputation = haf.reputation("your_account_name")
 print(f"Reputation: {reputation['reputation']}")
-
-# Get an account's balances
-balances = haf.get_account_balances("your_account_name")
-print(f"HIVE Balance: {balances['hive_balance']}")
 ```
 
-### Creating and Broadcasting a Transfer Transaction
+### Creating and Broadcasting a Transfer with an Encrypted Memo
 
 ```python
-from nectarlite import Transaction, Transfer
+from nectarlite import Account, Api, Memo, Transaction, Transfer, Wallet
 
-# Replace with your actual private key (WIF format)
-private_key = "5J..."
+# 1. Setup
+api = Api()
+wallet = Wallet()
 
+# Add your private keys to the in-memory wallet
+# IMPORTANT: In a real application, load these securely (e.g., from environment variables)
+sender_active_wif = "5J..."
+_wif = "5J..."
+wallet.add_key("your-sender-account", "active", sender_active_wif)
+wallet.add_key("your-sender-account", "memo", sender_memo_wif)
+
+# 2. Create the Memo Object
+from_account = Account("your-sender-account", api=api)
+to_account = Account("recipient-account", api=api)
+memo = Memo(from_account=from_account, to_account=to_account, wallet=wallet, api=api)
+
+# 3. Encrypt the Memo
+memo_text = "This is a top-secret message!"
+encrypted_memo = memo.encrypt(memo_text)
+
+# 4. Create and Sign the Transaction
 tx = Transaction(api=api)
-tx.append_op(Transfer(frm="your_account_name", to="recipient_account", amount="1.000", asset="HIVE"))
-tx.sign(private_key)
+tx.append_op(
+    Transfer(
+        frm="your-sender-account",
+        to="recipient-account",
+        amount="0.001 HIVE",
+        memo=encrypted_memo,
+    )
+)
+tx.sign(sender_active_wif) # Sign with the active key
+
+# 5. Broadcast the Transaction
 response = tx.broadcast()
 print(f"Transaction Broadcast Response: {response}")
 ```
