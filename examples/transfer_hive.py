@@ -1,6 +1,6 @@
 from nectarlite import Api, Transaction, Transfer, Wallet
 
-nodes = ["https://api.hive.blog", "https://api.openhive.network"]
+nodes = ["https://api.hive.blog", "https://api.syncad.com"]
 api = Api(nodes)
 
 # Create wallet and load your key

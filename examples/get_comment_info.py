@@ -5,7 +5,7 @@ from nectarlite.api import Api
 from nectarlite.comment import Comment
 
 # Initialize the API
-nodes = ["https://api.hive.blog", "https://api.openhive.network"]
+nodes = ["https://api.hive.blog", "https://api.syncad.com"]
 api = Api(nodes)
 
 # Get a real comment from the blockchain by fetching the latest post from a known account

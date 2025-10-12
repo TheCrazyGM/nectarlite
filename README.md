@@ -24,7 +24,7 @@ pip install nectarlite
 ```python
 from nectarlite import Api
 
-nodes = ["https://api.hive.blog", "https://api.openhive.network"]
+nodes = ["https://api.hive.blog", "https://api.syncad.com"]
 api = Api(nodes)
 ```
 

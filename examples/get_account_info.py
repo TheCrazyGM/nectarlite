@@ -4,7 +4,7 @@ from nectarlite.account import Account
 from nectarlite.api import Api
 
 # Initialize the API
-nodes = ["https://api.hive.blog", "https://api.openhive.network"]
+nodes = ["https://api.hive.blog", "https://api.syncad.com"]
 api = Api(nodes)
 
 # Get an account

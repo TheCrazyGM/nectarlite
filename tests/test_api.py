@@ -12,7 +12,7 @@ class TestApi(unittest.TestCase):
     """Unit tests for the Api class."""
 
     def setUp(self):
-        self.nodes = ["https://api.hive.blog", "https://api.openhive.network"]
+        self.nodes = ["https://api.hive.blog", "https://api.syncad.com"]
         self.api = Api(self.nodes)
 
     @patch("requests.post")

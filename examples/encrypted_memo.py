@@ -26,7 +26,7 @@ def main():
 
     # 1. Setup
     print("Initializing API and Wallet...")
-    api = Api(nodes=["https://api.hive.blog", "https://api.openhive.network"])
+    api = Api(nodes=["https://api.hive.blog", "https://api.syncad.com"])
     wallet = Wallet()
 
     # Add keys to the in-memory wallet

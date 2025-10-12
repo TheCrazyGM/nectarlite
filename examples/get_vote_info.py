@@ -5,7 +5,7 @@ from nectarlite.api import Api
 from nectarlite.vote import Vote
 
 # Initialize the API
-nodes = ["https://api.hive.blog", "https://api.openhive.network"]
+nodes = ["https://api.hive.blog", "https://api.syncad.com"]
 api = Api(nodes)
 
 # Get a real vote from the blockchain by fetching a recent post and its voters
