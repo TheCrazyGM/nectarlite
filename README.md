@@ -11,7 +11,7 @@ Nectarlite is a lightweight Python library for interacting with the Hive blockch
 - **Account Insights:** Built-in helpers for reputation, voting power, and resource credits.
 - **HAF Integration:** Access to the Hive Account Feed (HAF) for advanced queries.
 - **Memo Encryption:** Encrypt and decrypt memos for private communication.
-- **Real-Time Event Listener:** Stream blocks and operations as they happen.
+- **Real-Time Stream:** Stream blocks and operations as they happen.
 
 ## Installation
 
@@ -57,10 +57,10 @@ if rc_details:
 Listen for all new votes on the Hive blockchain in real-time.
 
 ```python
-from nectarlite import Api, EventListener
+from nectarlite import Api, Stream
 
 # We use 'head' mode to get events as soon as they are broadcast
-listener = EventListener(api=Api(["https://api.hive.blog"]), blockchain_mode="head")
+listener = Stream(api=Api(["https://api.hive.blog"]), blockchain_mode="head")
 
 print("Listening for new votes... (Press Ctrl+C to stop)")
 for vote in listener.on("vote"):

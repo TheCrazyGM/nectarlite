@@ -52,7 +52,7 @@ class BlockListener:
             time.sleep(3)
 
 
-class EventListener:
+class Stream:
     """Listen for specific events on the Hive blockchain."""
 
     def __init__(

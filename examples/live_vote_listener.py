@@ -3,7 +3,7 @@
 import logging
 
 from nectarlite.api import Api
-from nectarlite.event_listener import EventListener
+from nectarlite.stream import Stream
 
 # Configure logging to see the events as they come in
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
@@ -18,7 +18,7 @@ def main():
         api = Api(["https://api.hive.blog"])
 
         # We will listen in 'head' mode to get votes as soon as they are broadcast
-        listener = EventListener(api=api, blockchain_mode="head")
+        listener = Stream(api=api, blockchain_mode="head")
 
         # Use the 'on' method to filter for 'vote' operations
         for vote in listener.on("vote"):

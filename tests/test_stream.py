@@ -4,7 +4,7 @@ from unittest.mock import Mock
 import pytest
 
 from nectarlite.api import Api
-from nectarlite.event_listener import EventListener
+from nectarlite.stream import Stream
 
 
 @pytest.fixture
@@ -54,7 +54,7 @@ def mock_api_factory():
 def test_stream_blocks(mock_api_factory):
     """Tests that the listener correctly streams a range of blocks."""
     mock_api = mock_api_factory()  # Get a fresh mock
-    listener = EventListener(api=mock_api, start_block=1, end_block=3)
+    listener = Stream(api=mock_api, start_block=1, end_block=3)
     blocks = list(listener.stream_blocks())
     assert len(blocks) == 3
     assert blocks[2]["block_id"] == 3
@@ -63,7 +63,7 @@ def test_stream_blocks(mock_api_factory):
 def test_stream_ops(mock_api_factory):
     """Tests that the listener correctly extracts all operations from blocks."""
     mock_api = mock_api_factory()  # Get a fresh mock
-    listener = EventListener(api=mock_api, start_block=1, end_block=3)
+    listener = Stream(api=mock_api, start_block=1, end_block=3)
     ops = list(listener.stream_ops())
     assert len(ops) == 3
     assert ops[1]["op"][0] == "vote"
@@ -72,7 +72,7 @@ def test_stream_ops(mock_api_factory):
 def test_on_filter_by_content(mock_api_factory):
     """Tests filtering operations by their content."""
     mock_api = mock_api_factory()  # Get a fresh mock
-    listener = EventListener(api=mock_api, start_block=1, end_block=3)
+    listener = Stream(api=mock_api, start_block=1, end_block=3)
     filtered_ops = list(listener.on("transfer", filter_by={"to": "g"}))
     assert len(filtered_ops) == 1
     assert filtered_ops[0]["op"][1]["sender"] == "f"
@@ -81,6 +81,6 @@ def test_on_filter_by_content(mock_api_factory):
 def test_on_filter_by_op_type(mock_api_factory):
     """Tests filtering operations by just their type."""
     mock_api = mock_api_factory()  # Get a fresh mock
-    listener = EventListener(api=mock_api, start_block=1, end_block=3)
+    listener = Stream(api=mock_api, start_block=1, end_block=3)
     transfer_ops = list(listener.on("transfer"))
     assert len(transfer_ops) == 2
