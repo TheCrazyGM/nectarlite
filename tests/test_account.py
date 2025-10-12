@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock, patch
 
 import pytest
@@ -177,3 +178,93 @@ def test_account_get_reputation(mock_haf):
 
     # Alias property mirrors reputation
     assert account.rep == 123456
+
+
+def test_account_get_voting_power_without_refresh():
+    account = Account("testaccount")
+    now = datetime.now(timezone.utc)
+    account._data = {
+        "voting_manabar": {
+            "current_mana": 9000,
+            "max_mana": 10000,
+            "last_update_time": (now - timedelta(hours=1)).isoformat(),
+        }
+    }
+
+    vp = account.get_voting_power()
+    property_value = account.voting_power
+    alias_value = account.vp
+
+    assert 90 < vp <= 100
+    assert property_value == pytest.approx(vp, rel=1e-6)
+    assert alias_value == pytest.approx(vp, rel=1e-6)
+
+
+def test_account_get_voting_power_triggers_refresh_when_missing():
+    api = Mock(spec=Api)
+    account = Account("testaccount", api=api)
+    account.refresh = Mock()
+    account._data = {}  # ensure empty so refresh is invoked
+    account.refresh.side_effect = lambda: account._data.update(
+        {
+            "voting_manabar": {
+                "current_mana": 1000,
+                "max_mana": 10000,
+                "last_update_time": datetime.now(timezone.utc).isoformat(),
+            }
+        }
+    )
+
+    vp = account.get_voting_power()
+    account.refresh.assert_called_once()
+    assert isinstance(vp, float)
+
+
+def test_account_get_rc_info_and_caching():
+    api = Mock(spec=Api)
+    now = datetime.now(timezone.utc)
+    last_update = int((now - timedelta(hours=2)).timestamp())
+    api.call.return_value = {
+        "rc_accounts": [
+            {
+                "max_rc": "200000",
+                "rc_manabar": {
+                    "current_mana": "100000",
+                    "last_update_time": last_update,
+                },
+            }
+        ]
+    }
+
+    account = Account("testaccount", api=api)
+
+    info = account.get_rc_info()
+    api.call.assert_called_once_with(
+        "rc_api", "find_rc_accounts", [{"accounts": ["testaccount"]}]
+    )
+    assert info is account.rc_info
+    assert info["max_mana"] == 200000
+    assert info["last_mana"] == 100000
+    assert info["current_mana"] >= 100000
+    assert 0 <= account.rc <= 100
+
+    api.call.reset_mock()
+    cached = account.get_rc_info()
+    api.call.assert_not_called()
+    assert cached is info
+
+    api.call.return_value = {
+        "rc_accounts": [
+            {
+                "max_rc": "200000",
+                "rc_manabar": {
+                    "current_mana": "150000",
+                    "last_update_time": last_update,
+                },
+            }
+        ]
+    }
+
+    refreshed = account.get_rc_info(refresh=True)
+    api.call.assert_called_once()
+    assert refreshed["last_mana"] == 150000

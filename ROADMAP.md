@@ -83,10 +83,10 @@ Inspired by hive-nectar, add select common features for easier script-writing.
 
 - [ ] **Common Operation Helpers (Extended):** Inspired by lighthive:
   - [x] `FollowOp`: Follow/unfollow/ignore/unignore accounts (implemented via `Account` helpers and supporting tests/examples).
-  - [ ] **Account Helper Methods:** Add utility methods for:
-    - [ ] Reputation calculation
-    - [ ] Voting power calculation with regeneration
-    - [ ] Resource Credits (RC) information
+  - [x] **Account Helper Methods:** Add utility methods for:
+    - [x] Reputation calculation
+    - [x] Voting power calculation with regeneration
+    - [x] Resource Credits (RC) information
 
 - [ ] **Advanced Node Management:** Enhance `Api` with:
   - [ ] Latency testing and intelligent node selection
