@@ -20,23 +20,25 @@ class TestTransaction(unittest.TestCase):
         if method == "get_dynamic_global_properties":
             return {
                 "head_block_number": 12345,
-                "head_block_id": "0000303900000000000000000000000000000000",
+                "head_block_id": "0000303901020304000000000000000000000000000000000000000000000000",
+                "time": "2024-01-01T00:00:00",
             }
-        elif method == "lookup_asset_symbols":
-            return [
-                {
-                    "symbol": "HIVE",
-                    "precision": 3,
+        elif method == "get_block":
+            return {
+                "block": {
+                    "previous": "0000303801020304000000000000000000000000000000000000000000000000"
                 }
-            ]
-        elif method == "broadcast_transaction":
-            return {"result": {"id": "123"}}
+            }
+        elif method == "get_transaction_hex":
+            return "deadbeef"
+        elif method == "broadcast_transaction_synchronous":
+            return {"id": "123"}
 
     def test_set_block_params(self):
         """Test the _set_block_params method."""
         self.tx._set_block_params()
-        self.assertEqual(self.tx.ref_block_num, 12345)
-        self.assertEqual(self.tx.ref_block_prefix, 12345)
+        self.assertEqual(self.tx.ref_block_num, 12342)
+        self.assertEqual(self.tx.ref_block_prefix, 0x04030201)
 
     @patch("nectarlite.transaction.sign")
     def test_successful_broadcast(self, mock_sign):
@@ -63,17 +65,35 @@ class TestTransaction(unittest.TestCase):
         if method == "get_dynamic_global_properties":
             return {
                 "head_block_number": 12345,
-                "head_block_id": "0000303900000000000000000000000000000000",
+                "head_block_id": "0000303901020304000000000000000000000000000000000000000000000000",
+                "time": "2024-01-01T00:00:00",
             }
-        elif method == "lookup_asset_symbols":
-            return [
-                {
-                    "symbol": "HIVE",
-                    "precision": 3,
+        elif method == "get_block":
+            return {
+                "block": {
+                    "previous": "0000303801020304000000000000000000000000000000000000000000000000"
                 }
-            ]
-        elif method == "broadcast_transaction":
+            }
+        elif method == "get_transaction_hex":
+            return "deadbeef"
+        elif method == "broadcast_transaction_synchronous":
             raise TransactionError("Broadcast failed")
+
+    @patch("nectarlite.transaction.sign")
+    def test_transfer_wire_format(self, mock_sign):
+        """Ensure transfer serialization uses canonical amount string and legacy wire symbol."""
+
+        mock_signature = bytes([31]) + b"\x00" * 64
+        mock_sign.return_value = mock_signature
+
+        self.tx.append_op(Transfer(to="test", amount="1.000", asset="HIVE", frm="test"))
+        self.tx.sign("5J...")
+
+        tx_dict = self.tx._construct_tx()
+        self.assertEqual(tx_dict["operations"][0][1]["amount"], "1.000 HIVE")
+
+        serialized = self.tx._serialize_tx()
+        self.assertIn(b"STEEM", serialized)
 
 
 class TestFollowOperation(unittest.TestCase):

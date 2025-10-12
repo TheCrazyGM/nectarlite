@@ -1,6 +1,6 @@
 from typing import Dict, Optional
 
-from .crypto.base58 import gph_base58_check_decode
+from .crypto.base58 import base58_check_decode
 from .crypto.keys import PrivateKey
 from .exceptions import InvalidKeyFormatError, MissingKeyError
 from .transaction import Transaction
@@ -22,8 +22,9 @@ class Wallet:
             raise InvalidKeyFormatError("Private WIF keys start with '5'.")
 
         try:
-            decoded = gph_base58_check_decode(wif)
-            if len(decoded) < 32:
+            decoded_hex = base58_check_decode(wif, skip_first_byte=False)
+            decoded_bytes = bytes.fromhex(decoded_hex)
+            if len(decoded_bytes) not in (33, 34):
                 raise InvalidKeyFormatError("Invalid WIF payload length.")
         except Exception:
             raise InvalidKeyFormatError("Invalid WIF format.")
@@ -47,7 +48,24 @@ class Wallet:
         wif = self.get_key(account, role)
         if wif is None:
             return None
-        return PrivateKey(gph_base58_check_decode(wif))
+
+        decoded_hex = base58_check_decode(wif, skip_first_byte=False)
+        decoded_bytes = bytes.fromhex(decoded_hex)
+
+        if len(decoded_bytes) not in (33, 34):
+            raise InvalidKeyFormatError("Invalid WIF payload length.")
+
+        # Drop the leading network/version byte.
+        raw_key = decoded_bytes[1:]
+
+        # Remove optional compression flag if present.
+        if len(raw_key) == 33 and raw_key[-1] == 0x01:
+            raw_key = raw_key[:-1]
+
+        if len(raw_key) != 32:
+            raise InvalidKeyFormatError("Invalid raw private key length.")
+
+        return PrivateKey(raw_key)
 
     def sign(self, transaction: Transaction, account: str, role: str) -> None:
         """Sign the transaction using the specified account's role key."""

@@ -44,10 +44,14 @@ def base58encode(hexstring):
     return (BASE58_ALPHABET[0:1] * leading_zeroes_count + res).decode("ascii")
 
 
-def ripemd160(s: bytes) -> bytes:
-    """RIPEMD160 hash of raw bytes."""
+def ripemd160(data) -> bytes:
+    """RIPEMD160 hash of raw bytes or hex string."""
+
     h = hashlib.new("ripemd160")
-    h.update(s)
+    if isinstance(data, str):
+        h.update(unhexlify(data))
+    else:
+        h.update(data)
     return h.digest()
 
 
@@ -58,7 +62,8 @@ def doublesha256(s: str) -> bytes:
 
 def gph_base58_check_encode(s: str) -> str:
     """Graphene-style Base58 check encoding from a hex string."""
-    checksum = doublesha256(s)[:4]
+
+    checksum = ripemd160(s)[:4]
     result_hex = s + hexlify(checksum).decode("ascii")
     return base58encode(result_hex)
 
@@ -70,8 +75,26 @@ def gph_base58_check_decode(s: str) -> str:
     payload_hex = decoded_hex[:-8]
     original_checksum = decoded_bytes[-4:]
 
+    calculated_checksum = ripemd160(payload_hex)[:4]
+
+    if not (original_checksum == calculated_checksum):
+        raise AssertionError("Invalid checksum")
+    return payload_hex
+
+
+def base58_check_decode(s: str, skip_first_byte: bool = True) -> str:
+    """Bitcoin-style Base58 check decoding using double SHA256."""
+
+    decoded_hex = base58decode(s)
+    decoded_bytes = unhexlify(decoded_hex)
+    payload_hex = decoded_hex[:-8]
+    original_checksum = decoded_bytes[-4:]
+
     calculated_checksum = doublesha256(payload_hex)[:4]
 
     if not (original_checksum == calculated_checksum):
         raise AssertionError("Invalid checksum")
+
+    if skip_first_byte:
+        return payload_hex[2:]
     return payload_hex

@@ -3,7 +3,12 @@
 import struct
 
 from .asset import Asset
-from .types import String, Uint8
+from .types import Uint8
+
+WIRE_SYMBOL_ALIASES = {
+    "HIVE": "STEEM",
+    "HBD": "SBD",
+}
 
 
 class Amount:
@@ -28,10 +33,17 @@ class Amount:
         if not self.asset["precision"]:
             self.asset.refresh()
         amount = int(self.amount * (10 ** self.asset["precision"]))
+        wire_symbol = WIRE_SYMBOL_ALIASES.get(self.asset.symbol, self.asset.symbol)
+
+        symbol_bytes = wire_symbol.encode("ascii")
+        if len(symbol_bytes) > 7:
+            raise ValueError("Asset symbol must be 7 characters or fewer")
+        padded_symbol = symbol_bytes + b"\x00" * (7 - len(symbol_bytes))
+
         return (
             struct.pack("<q", amount)
             + bytes(Uint8(self.asset["precision"]))
-            + bytes(String(self.asset.symbol))
+            + padded_symbol
         )
 
     def __str__(self):

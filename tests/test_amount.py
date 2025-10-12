@@ -5,7 +5,7 @@ import unittest
 from unittest.mock import MagicMock
 
 from nectarlite.amount import Amount
-from nectarlite.types import String, Uint8
+from nectarlite.types import Uint8
 
 
 class TestAmount(unittest.TestCase):
@@ -30,7 +30,7 @@ class TestAmount(unittest.TestCase):
         """Test the __bytes__ method."""
         amount = Amount(1.000, "HIVE", api=self.api)
         expected_bytes = (
-            struct.pack("<q", 1000) + bytes(Uint8(3)) + bytes(String("HIVE"))
+            struct.pack("<q", 1000) + bytes(Uint8(3)) + b"STEEM\x00\x00"
         )
         self.assertEqual(bytes(amount), expected_bytes)
 

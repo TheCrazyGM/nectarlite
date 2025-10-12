@@ -73,6 +73,13 @@ class Transfer(Operation):
             + bytes(String(self.params["memo"]))
         )
 
+    def to_dict(self):
+        payload = self.params.copy()
+        amount_value = payload.pop("amount")
+        asset_symbol = payload.pop("asset")
+        payload["amount"] = f"{amount_value} {asset_symbol}"
+        return [self.op_name, payload]
+
 
 class Vote(Operation):
     """Vote operation."""
@@ -189,7 +196,27 @@ class Transaction:
                 raise TransactionError("API not configured to get block params.")
             self._set_block_params()
 
-        message = self._serialize_tx()
+        tx_dict = self._construct_tx()
+        tx_for_hex = dict(tx_dict)
+        tx_for_hex.setdefault("signatures", [])
+
+        if not self.api:
+            raise TransactionError("API not configured to get transaction hex.")
+
+        tx_hex = self.api.call("condenser_api", "get_transaction_hex", [tx_for_hex])
+        if isinstance(tx_hex, dict):
+            tx_hex = tx_hex.get("hex") or tx_hex.get("transaction_hex")
+        if not isinstance(tx_hex, str):
+            raise TransactionError("Unexpected response from get_transaction_hex")
+
+        tx_hex = tx_hex.strip()
+
+        if not tx_hex:
+            raise TransactionError("Empty transaction hex returned")
+
+        digest_hex = tx_hex[:-2] if len(tx_hex) > 2 else tx_hex
+
+        message = bytes.fromhex(HIVE_CHAIN_ID + digest_hex)
         self.signatures.append(sign(message, wif))
 
     def broadcast(self):
@@ -201,20 +228,41 @@ class Transaction:
 
         tx = self._construct_tx()
         tx["signatures"] = [s.hex() for s in self.signatures]
-        response = self.api.call("condenser_api", "broadcast_transaction", [tx])
-        return {"id": response["result"]["id"]}
+        try:
+            response = self.api.call(
+                "condenser_api", "broadcast_transaction_synchronous", [tx]
+            )
+        except Exception as exc:
+            raise TransactionError(str(exc)) from exc
+        return response
 
     def _set_block_params(self):
         """Get the reference block number and prefix from the blockchain."""
         props = self.api.call("condenser_api", "get_dynamic_global_properties", [])
-        self.ref_block_num = props["head_block_number"] & 0xFFFF
-        self.ref_block_prefix = int(props["head_block_id"][:8], 16)
+        head_block_number = props["head_block_number"]
+        self.ref_block_num = (head_block_number - 3) & 0xFFFF
+
+        block_num = head_block_number - 2
+        block_response = self.api.call("block_api", "get_block", {"block_num": block_num})
+        block_data = block_response.get("block") if isinstance(block_response, dict) else block_response
+        if not block_data or "previous" not in block_data:
+            raise TransactionError("Unable to fetch reference block")
+
+        previous_block_bytes = bytes.fromhex(block_data["previous"])
+        self.ref_block_prefix = int.from_bytes(previous_block_bytes[4:8], "little")
+
+        head_block_time = props["time"]
+        expiration_dt = datetime.strptime(head_block_time, "%Y-%m-%dT%H:%M:%S") + timedelta(seconds=30)
+        self.expiration_override = expiration_dt.strftime("%Y-%m-%dT%H:%M:%S")
 
     def _construct_tx(self):
         """Construct the transaction dictionary."""
-        expiration = (datetime.now(timezone.utc) + timedelta(minutes=5)).strftime(
-            "%Y-%m-%dT%H:%M:%S"
-        )
+        if hasattr(self, "expiration_override"):
+            expiration = self.expiration_override
+        else:
+            expiration = (datetime.now(timezone.utc) + timedelta(minutes=5)).strftime(
+                "%Y-%m-%dT%H:%M:%S"
+            )
         return {
             "ref_block_num": self.ref_block_num,
             "ref_block_prefix": self.ref_block_prefix,

@@ -11,10 +11,15 @@ class Api:
     def __init__(self, nodes, timeout=5):
         """Initialize the Api class.
 
-        :param list nodes: A list of Hive node URLs.
+        :param list nodes: A list of Hive node URLs or a single URL string.
         :param int timeout: The timeout for requests in seconds.
         """
-        self.nodes = nodes
+        if isinstance(nodes, str):
+            nodes = [nodes]
+        elif not hasattr(nodes, "__iter__"):
+            raise ValueError("nodes must be a string or iterable of URLs")
+
+        self.nodes = list(nodes)
         self.timeout = timeout
         self._current_node_index = 0
 
