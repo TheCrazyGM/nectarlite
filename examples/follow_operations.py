@@ -13,7 +13,7 @@ and replace the sample keys with real keys.
 from nectarlite import Account, Api, Wallet
 
 # Connect to Hive nodes
-api = Api(["https://api.hive.blog", "https://api.openhive.network"])
+api = Api(["https://api.hive.blog", "https://api.syncad.com"])
 
 # Sample account - replace with your own account
 account_name = "your_account_name"
