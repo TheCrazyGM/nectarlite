@@ -97,7 +97,8 @@ tx.append_op(
     Transfer(
         frm="your-sender-account",
         to="recipient-account",
-        amount="0.001 HIVE",
+        amount="0.001",
+        asset="HIVE",
         memo=encrypted_memo,
     )
 )
