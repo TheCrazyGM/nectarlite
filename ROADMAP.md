@@ -17,6 +17,10 @@ This document outlines the development plan for `nectarlite`, a lightweight Pyth
 nectarlite/
 ├── __init__.py
 ├── api.py
+├── account.py
+├── comment.py
+├── vote.py
+├── haf.py
 ├── transaction.py
 ├── chain.py
 ├── exceptions.py
@@ -50,15 +54,18 @@ nectarlite/
 
 ## Phase 2: High-Level Abstractions
 
-- [x] **Account:** Create a simple `Account` class.
+- [x] **Account:** Create a simple `Account` class with dynamic, auto-refreshing properties.
 - [x] **Block:** Create a simple `Block` class.
 - [x] **Amount:** Create a simple `Amount` class.
 - [x] **Asset:** Create a simple `Asset` class.
+- [x] **Comment:** Create a `Comment` class with dynamic, auto-refreshing properties.
+- [x] **Vote:** Create a `Vote` class with dynamic, auto-refreshing properties.
+- [x] **HAF:** Create a `HAF` class for interacting with the Hive Account Feed.
 
 ## Phase 3: Refinement and Testing
 
-- [x] **Unit Tests:** Write comprehensive unit tests for all components.
-- [x] **Documentation:** Write clear and concise documentation.
+- [x] **Unit Tests:** Write comprehensive unit tests for all components, including the new `Account`, `Comment`, `Vote`, and `HAF` classes.
+- [x] **Documentation:** Write clear and concise documentation, including a `README.md` and example usage scripts.
 - [x] **Linting and Formatting:** Ensure the code adheres to PEP 8 and other best practices.
 
 ## Phase 4: User-Friendly Scripting Enhancements
@@ -66,21 +73,22 @@ nectarlite/
 Inspired by hive-nectar, add select common features for easier script-writing (e.g., high-level ops like transfers and votes). Keep it optional and lightweight—users can still build custom ops using core classes.
 
 - [x] **Wallet Class:** Add a simple in-memory `Wallet` for key management (load keys by name from WIF, select for signing). Implemented in `src/nectarlite/wallet.py`.
+- [x] **Dynamic, Auto-Refreshing Objects:** The `Account`, `Comment`, and `Vote` classes now automatically fetch their data from the blockchain on first attribute access, and cast appropriate fields to `Amount` objects.
 
 - [ ] **Common Operation Helpers:** Pre-built classes/methods for frequent Hive actions (append to `Transaction` easily):
-  - [ ] `TransferOp`: HIVE/HBD transfers with optional encrypted memo.
-  - [ ] `VoteOp`: Up/down-vote on content with percent weight.
-  - [ ] `CommentOp`: Post articles, comments, or replies.
+  - [x] `TransferOp`: HIVE/HBD transfers with optional encrypted memo.
+  - [x] `VoteOp`: Up/down-vote on content with percent weight.
+  - [x] `CommentOp`: Post articles, comments, or replies.
   - [ ] `FollowOp`: Follow/unfollow accounts.
 
 - [ ] **Key Utilities:** Helper functions in `crypto/` or `utils/`:
-  - [ ] Import/validate WIF keys.
+  - [x] Import/validate WIF keys.
   - [ ] Memo encryption/decryption (using public/private keys).
 
-- [ ] **API Robustness:** Enhance `Api`:
-  - [ ] Node failover (try secondary nodes on failure).
+- [x] **API Robustness:** Enhance `Api`:
+  - [x] Node failover (try secondary nodes on failure).
   - [ ] Optional query caching (e.g., for chain params).
 
 - [ ] **Validation:** Basic checks (e.g., valid account name format, amount precision).
 
-- [ ] **Examples:** Expand `examples/` with new scripts (e.g., simple voter, transfer bot skeleton).
+- [x] **Examples:** Expand `examples/` with new scripts for `Account`, `Comment`, `Vote`, and `HAF`.
