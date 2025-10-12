@@ -8,6 +8,7 @@ Nectarlite is a lightweight Python library for interacting with the Hive blockch
 - **API Communication:** Easily make RPC calls to Hive nodes.
 - **Transaction Building & Signing:** Construct and sign Hive transactions.
 - **High-Level Abstractions:** Simple classes for Account, Comment, Vote, Asset, and Amount.
+- **Account Insights:** Built-in helpers for reputation, voting power, and resource credits.
 - **HAF Integration:** Access to the Hive Account Feed (HAF) for advanced queries.
 - **Memo Encryption:** Encrypt and decrypt memos for private communication.
 - **Real-Time Event Listener:** Stream blocks and operations as they happen.
@@ -40,6 +41,15 @@ account = Account("your_account_name", api=api)
 print(f"Account Name: {account.name}")
 print(f"Balance: {account.balance}")
 print(f"Vesting Shares: {account.vesting_shares}")
+print(f"Reputation: {account.reputation}")
+print(f"Voting Power: {account.voting_power:.2f}%")
+print(f"Resource Credits: {account.rc if account.rc is not None else 'unavailable'}")
+
+# Inspect detailed RC information when available
+rc_details = account.rc_info
+if rc_details:
+    for key, value in rc_details.items():
+        print(key, value)
 ```
 
 ### Streaming Live Blockchain Events
