@@ -6,7 +6,8 @@ from binascii import hexlify, unhexlify
 from Crypto.Cipher import AES
 
 from nectarlite.crypto.base58 import base58decode, base58encode
-from nectarlite.crypto.keys import PublicKey
+from nectarlite.crypto.keys import PrivateKey, PublicKey
+from nectarlite.crypto.secp256k1 import scalar_mult
 from nectarlite.types import varint
 
 
@@ -40,10 +41,16 @@ def _unpad(data):
 
 def get_shared_secret(priv, pub):
     """Generate a shared secret from a private key and a public key."""
+    if isinstance(priv, PrivateKey):
+        priv_scalar = int(priv)
+    else:
+        priv_scalar = int(priv)
+
     pub_point = pub.point()
-    priv_point = int(priv)
-    res = pub_point * priv_point
-    res_hex = f"{res.x():064x}"
+    shared_point = scalar_mult(priv_scalar, pub_point)
+    if shared_point is None:
+        raise ValueError("Invalid shared secret point")
+    res_hex = f"{shared_point[0]:064x}"
     return res_hex
 
 

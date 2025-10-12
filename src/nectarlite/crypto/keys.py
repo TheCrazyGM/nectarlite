@@ -1,32 +1,41 @@
 # -*- coding: utf-8 -*-
 
-from ecdsa import SECP256k1, SigningKey, VerifyingKey
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 
 from .base58 import gph_base58_check_decode, gph_base58_check_encode
 
 
 class PrivateKey:
-    def __init__(self, wif):
-        # Accept raw private key bytes or hex strings
-        if isinstance(wif, str):
-            wif = bytes.fromhex(wif)
-        self.sk = SigningKey.from_string(wif, curve=SECP256k1)
+    def __init__(self, key_bytes):
+        if isinstance(key_bytes, str):
+            key_bytes = bytes.fromhex(key_bytes)
+        if not isinstance(key_bytes, (bytes, bytearray)) or len(key_bytes) != 32:
+            raise ValueError("Private key must be 32 raw bytes")
+
+        private_value = int.from_bytes(key_bytes, "big")
+        self._key = ec.derive_private_key(private_value, ec.SECP256K1())
 
     def __int__(self):
-        return self.sk.privkey.secret_multiplier
+        return self._key.private_numbers().private_value
+
+    @property
+    def key(self):
+        return self._key
 
     @property
     def pubkey(self):
-        return PublicKey(self.sk.get_verifying_key())
+        return PublicKey(self._key.public_key())
 
 
 class PublicKey:
-    def __init__(self, vk, prefix="STM"):
-        if isinstance(vk, VerifyingKey):
-            self.vk = vk
-        elif isinstance(vk, str):
-            # Handle string input provided as Hive-style public key
-            key_str = vk
+    def __init__(self, key, prefix="STM"):
+        if isinstance(key, ec.EllipticCurvePublicKey):
+            self._key = key
+        elif isinstance(key, (bytes, bytearray)):
+            self._key = ec.EllipticCurvePublicKey.from_encoded_point(ec.SECP256K1(), key)
+        elif isinstance(key, str):
+            key_str = key
             if key_str.startswith(prefix):
                 key_str = key_str[len(prefix) :]
 
@@ -34,20 +43,26 @@ class PublicKey:
                 key_hex = gph_base58_check_decode(key_str)
                 key_bytes = bytes.fromhex(key_hex)
             except Exception:
-                # Fallback for raw hex strings
                 key_bytes = bytes.fromhex(key_str)
 
-            self.vk = VerifyingKey.from_string(key_bytes, curve=SECP256k1)
+            self._key = ec.EllipticCurvePublicKey.from_encoded_point(
+                ec.SECP256K1(), key_bytes
+            )
         else:
-            # This expects a string of bytes
-            self.vk = VerifyingKey.from_string(vk, curve=SECP256k1)
+            raise TypeError("Unsupported public key input")
+
         self.prefix = prefix
 
+    @property
+    def key(self):
+        return self._key
+
     def point(self):
-        return self.vk.pubkey.point
+        numbers = self._key.public_numbers()
+        return numbers.x, numbers.y
 
     def to_compressed_bytes(self):
-        return self.vk.to_string("compressed")
+        return self._key.public_bytes(Encoding.X962, PublicFormat.CompressedPoint)
 
     def __repr__(self):
         return self.__str__()
