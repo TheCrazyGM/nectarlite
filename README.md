@@ -8,8 +8,9 @@ Nectarlite is a lightweight Python library for interacting with the Hive blockch
 - **API Communication:** Easily make RPC calls to Hive nodes.
 - **Transaction Building & Signing:** Construct and sign Hive transactions.
 - **High-Level Abstractions:** Simple classes for Account, Comment, Vote, Asset, and Amount.
-- **HAF Integration:** Access to the Hive Application Framework (HAF) for advanced queries.
+- **HAF Integration:** Access to the Hive Account Feed (HAF) for advanced queries.
 - **Memo Encryption:** Encrypt and decrypt memos for private communication.
+- **Real-Time Event Listener:** Stream blocks and operations as they happen.
 
 ## Installation
 
@@ -24,7 +25,7 @@ pip install nectarlite
 ```python
 from nectarlite import Api
 
-nodes = ["https://api.hive.blog", "https://api.syncad.com"]
+nodes = ["https://api.hive.blog", "https://api.openhive.network"]
 api = Api(nodes)
 ```
 
@@ -41,30 +42,21 @@ print(f"Balance: {account.balance}")
 print(f"Vesting Shares: {account.vesting_shares}")
 ```
 
-### Getting Comment and Vote Information
+### Streaming Live Blockchain Events
+
+Listen for all new votes on the Hive blockchain in real-time.
 
 ```python
-from nectarlite import Comment, Vote
+from nectarlite import Api, EventListener
 
-# Get a comment (replace with a real author and permlink)
-comment = Comment(author="gtg", permlink="this-is-a-test-post", api=api)
-print(f"Title: {comment.title}")
+# We use 'head' mode to get events as soon as they are broadcast
+listener = EventListener(api=Api(["https://api.hive.blog"]), blockchain_mode="head")
 
-# Get a vote on that comment (replace with a real voter)
-vote = Vote(voter="somevoter", author="gtg", permlink="this-is-a-test-post", api=api)
-print(f"Voter: {vote.voter}")
-```
-
-### Using the HAF API
-
-```python
-from nectarlite import HAF
-
-haf = HAF()
-
-# Get an account's reputation
-reputation = haf.reputation("your_account_name")
-print(f"Reputation: {reputation['reputation']}")
+print("Listening for new votes... (Press Ctrl+C to stop)")
+for vote in listener.on("vote"):
+    voter = vote["op"][1]["voter"]
+    author = vote["op"][1]["author"]
+    print(f"New Vote! Voter: {voter}, Post: @{author}/{vote["op"][1]["permlink"]}")
 ```
 
 ### Creating and Broadcasting a Transfer with an Encrypted Memo
@@ -77,22 +69,19 @@ api = Api()
 wallet = Wallet()
 
 # Add your private keys to the in-memory wallet
-# IMPORTANT: In a real application, load these securely (e.g., from environment variables)
+# IMPORTANT: In a real application, load these securely
 sender_active_wif = "5J..."
-_wif = "5J..."
+sender_memo_wif = "5J..."
 wallet.add_key("your-sender-account", "active", sender_active_wif)
 wallet.add_key("your-sender-account", "memo", sender_memo_wif)
 
-# 2. Create the Memo Object
+# 2. Create the Memo Object and Encrypt
 from_account = Account("your-sender-account", api=api)
 to_account = Account("recipient-account", api=api)
-memo = Memo(from_account=from_account, to_account=to_account, wallet=wallet, api=api)
+memo = Memo(from_account, to_account, wallet, api)
+encrypted_memo = memo.encrypt("This is a secret message!")
 
-# 3. Encrypt the Memo
-memo_text = "This is a top-secret message!"
-encrypted_memo = memo.encrypt(memo_text)
-
-# 4. Create and Sign the Transaction
+# 3. Create and Sign the Transaction
 tx = Transaction(api=api)
 tx.append_op(
     Transfer(
@@ -104,7 +93,7 @@ tx.append_op(
 )
 tx.sign(sender_active_wif) # Sign with the active key
 
-# 5. Broadcast the Transaction
+# 4. Broadcast the Transaction
 response = tx.broadcast()
 print(f"Transaction Broadcast Response: {response}")
 ```

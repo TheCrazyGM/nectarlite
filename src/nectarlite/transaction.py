@@ -1,5 +1,6 @@
 """Transaction class for creating and signing transactions."""
 
+import json
 from datetime import datetime, timedelta, timezone
 
 from .amount import Amount
@@ -123,6 +124,49 @@ class CustomJson(Operation):
             + bytes(String(self.params["id"]))
             + bytes(String(self.params["json"]))
         )
+
+
+class Follow(Operation):
+    """Follow operation for following, unfollowing, ignoring or unignoring an account."""
+
+    def __init__(self, follower, following, what=["blog"], api=None):
+        """Initialize a Follow operation.
+        
+        :param str follower: The account that is following.
+        :param str following: The account to follow.
+        :param list what: Action to perform ["blog"] for follow, [] for unfollow, ["ignore"] for ignore.
+        :param Api api: An instance of the Api class.
+        """
+        self.follower = follower
+        self.following = following
+        self.what = what
+        self.api = api
+        
+        # Create the JSON payload for the follow operation
+        json_data = json.dumps([
+            "follow", 
+            {
+                "follower": follower,
+                "following": following,
+                "what": what
+            }
+        ])
+        
+        # Create the underlying CustomJson operation
+        self.custom_json = CustomJson(
+            id="follow",
+            json_data=json_data,
+            required_posting_auths=[follower],
+            api=api
+        )
+
+    def to_dict(self):
+        """Return the operation as a dictionary."""
+        return self.custom_json.to_dict()
+    
+    def __bytes__(self):
+        """Return the binary representation of the operation."""
+        return bytes(self.custom_json)
 
 
 class Transaction:

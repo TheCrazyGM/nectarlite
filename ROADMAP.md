@@ -22,6 +22,7 @@ nectarlite/
 ├── vote.py
 ├── haf.py
 ├── memo.py
+├── event_listener.py
 ├── transaction.py
 ├── chain.py
 ├── exceptions.py
@@ -39,21 +40,9 @@ nectarlite/
 ## Phase 1: Core Components
 
 - [x] **API Communication:** Implement the core logic for making API calls to Hive nodes.
-  - [x] `api.py`: Create a class for making RPC calls.
-  - [x] `exceptions.py`: Define custom exception classes.
 - [x] **Cryptography:** Port over the essential cryptography modules from `nectargraphenebase`.
-  - [x] `crypto/aes.py`: AES encryption/decryption for memos.
-  - [x] `crypto/base58.py`: Base58 encoding/decoding for keys.
-  - [x] `crypto/bip32.py`: BIP32 for hierarchical deterministic keys.
-  - [x] `crypto/bip38.py`: BIP38 for encrypted keys.
-  - [x] `crypto/ecdsa.py`: ECDSA for signing and verifying transactions.
 - [x] **Transaction Building:** Implement the logic for creating and signing transactions.
-  - [x] `transaction.py`: Create a `Transaction` class.
-  - [x] `transaction.py`: Implement methods for adding operations to a transaction.
-  - [x] `transaction.py`: Implement methods for signing transactions.
 - [x] **Chain Data:** Implement basic data structures for interacting with the blockchain.
-  - [x] `chain.py`: Create a `Chain` class to hold chain-specific data (e.g., chain ID, prefix).
-  - [x] `__init__.py`: Expose the core classes.
 
 ## Phase 2: High-Level Abstractions
 
@@ -67,31 +56,44 @@ nectarlite/
 
 ## Phase 3: Refinement and Testing
 
-- [x] **Unit Tests:** Write comprehensive unit tests for all components, including the new `Account`, `Comment`, `Vote`, `HAF`, and `Memo` classes.
+- [x] **Unit Tests:** Write comprehensive unit tests for all components.
 - [x] **Documentation:** Write clear and concise documentation, including a `README.md` and example usage scripts.
 - [x] **Linting and Formatting:** Ensure the code adheres to PEP 8 and other best practices.
 
 ## Phase 4: User-Friendly Scripting Enhancements
 
-Inspired by hive-nectar, add select common features for easier script-writing (e.g., high-level ops like transfers and votes). Keep it optional and lightweight—users can still build custom ops using core classes.
+Inspired by hive-nectar, add select common features for easier script-writing.
 
-- [x] **Wallet Class:** Add a simple in-memory `Wallet` for key management (load keys by name from WIF, select for signing). Implemented in `src/nectarlite/wallet.py`.
-- [x] **Dynamic, Auto-Refreshing Objects:** The `Account`, `Comment`, and `Vote` classes now automatically fetch their data from the blockchain on first attribute access, and cast appropriate fields to `Amount` objects.
+- [x] **Wallet Class:** Add a simple in-memory `Wallet` for key management.
+- [x] **Dynamic, Auto-Refreshing Objects:** The `Account`, `Comment`, and `Vote` classes now automatically fetch their data.
+- [x] **Key Utilities:** Helper functions for WIF keys and memo encryption/decryption.
+- [x] **API Robustness:** Enhance `Api` with basic node failover.
 
-- [ ] **Common Operation Helpers:** Pre-built classes/methods for frequent Hive actions (append to `Transaction` easily):
+- [ ] **Common Operation Helpers:** Pre-built classes/methods for frequent Hive actions:
   - [x] `TransferOp`: HIVE/HBD transfers with optional encrypted memo.
   - [x] `VoteOp`: Up/down-vote on content with percent weight.
   - [x] `CommentOp`: Post articles, comments, or replies.
-  - [ ] `FollowOp`: Follow/unfollow accounts.
+  - [ ] `FollowOp`: See extended version in Phase 5.
 
-- [x] **Key Utilities:** Helper functions in `crypto/` or `utils/`:
-  - [x] Import/validate WIF keys.
-  - [x] Memo encryption/decryption (using public/private keys).
+- [x] **Examples:** Expand `examples/` with scripts for all major features.
 
-- [x] **API Robustness:** Enhance `Api`:
-  - [x] Node failover (try secondary nodes on failure).
-  - [ ] Optional query caching (e.g., for chain params).
+## Phase 5: Advanced Features
 
-- [ ] **Validation:** Basic checks (e.g., valid account name format, amount precision).
+- [x] **Event Listener:** Implement a real-time event listener for streaming blocks and operations.
 
-- [x] **Examples:** Expand `examples/` with new scripts for `Account`, `Comment`, `Vote`, `HAF`, and `Memo`.
+- [ ] **Common Operation Helpers (Extended):** Inspired by lighthive:
+  - [ ] `FollowOp`: Follow/unfollow/ignore/unignore accounts.
+  - [ ] **Account Helper Methods:** Add utility methods for:
+    - [ ] Reputation calculation
+    - [ ] Voting power calculation with regeneration
+    - [ ] Resource Credits (RC) information
+
+- [ ] **Advanced Node Management:** Enhance `Api` with:
+  - [ ] Latency testing and intelligent node selection
+  - [ ] Circuit breaker pattern for temporarily excluding failing nodes
+  - [ ] Node performance metrics
+
+- [ ] **Batch Transaction Processing:** Support for batched API calls for better performance.
+
+- [ ] **Broader Operation Support:** Add helper classes for less common operations (e.g., witness voting, account recovery).
+- [ ] **Validation:** Add more robust validation for transaction parameters and data types.
