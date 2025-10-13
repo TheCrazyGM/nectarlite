@@ -57,7 +57,7 @@ def test_stream_blocks(mock_api_factory):
     listener = Stream(api=mock_api, start_block=1, end_block=3)
     blocks = list(listener.stream_blocks())
     assert len(blocks) == 3
-    assert blocks[2]["block_id"] == 3
+    assert blocks[2].data["block_id"] == 3
 
 
 def test_stream_ops(mock_api_factory):
@@ -66,7 +66,7 @@ def test_stream_ops(mock_api_factory):
     listener = Stream(api=mock_api, start_block=1, end_block=3)
     ops = list(listener.stream_ops())
     assert len(ops) == 3
-    assert ops[1]["op"][0] == "vote"
+    assert ops[1].type == "vote"
 
 
 def test_on_filter_by_content(mock_api_factory):
@@ -75,7 +75,7 @@ def test_on_filter_by_content(mock_api_factory):
     listener = Stream(api=mock_api, start_block=1, end_block=3)
     filtered_ops = list(listener.on("transfer", filter_by={"to": "g"}))
     assert len(filtered_ops) == 1
-    assert filtered_ops[0]["op"][1]["sender"] == "f"
+    assert filtered_ops[0].sender == "f"
 
 
 def test_on_filter_by_op_type(mock_api_factory):

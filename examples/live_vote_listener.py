@@ -22,10 +22,10 @@ def main():
 
         # Use the 'on' method to filter for 'vote' operations
         for vote in listener.on("vote"):
-            voter = vote["op"][1]["voter"]
-            author = vote["op"][1]["author"]
-            permlink = vote["op"][1]["permlink"]
-            weight = vote["op"][1]["weight"]
+            voter = vote.voter
+            author = vote.author
+            permlink = vote.permlink
+            weight = vote.weight
 
             logging.info(
                 f"New Vote! Voter: {voter}, Post: @{author}/{permlink}, Weight: {weight}"

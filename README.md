@@ -65,9 +65,9 @@ listener = Stream(api=Api(["https://api.hive.blog"]), blockchain_mode="head")
 
 print("Listening for new votes... (Press Ctrl+C to stop)")
 for vote in listener.on("vote"):
-    voter = vote["op"][1]["voter"]
-    author = vote["op"][1]["author"]
-    print(f"New Vote! Voter: {voter}, Post: @{author}/{vote["op"][1]["permlink"]}")
+    voter = vote.voter
+    author = vote.author
+    print(f"New Vote! Voter: {voter}, Post: @{author}/{vote.permlink}")
 ```
 
 ### Creating and Broadcasting a Transfer with an Encrypted Memo

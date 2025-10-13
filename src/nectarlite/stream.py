@@ -2,6 +2,8 @@
 import logging
 import time
 
+from .block import Block
+
 log = logging.getLogger(__name__)
 
 
@@ -44,12 +46,86 @@ class BlockListener:
                     "condenser_api", "get_block", [current_block]
                 )
                 if block_data:
-                    yield block_data
+                    yield Block(
+                        current_block,
+                        api=self.api,
+                        data=block_data,
+                    )
 
                 current_block += 1
 
             log.debug("Waiting for new blocks...")
             time.sleep(3)
+
+
+class Op:
+    """Represents an operation within a block."""
+
+    def __init__(
+        self,
+        block,
+        op_type,
+        op_value,
+        transaction=None,
+        transaction_index=None,
+        op_index=None,
+    ):
+        self.block = block
+        self.type = op_type
+        self.value = op_value
+        self.transaction = transaction
+        self.transaction_index = transaction_index
+        self.op_index = op_index
+
+    @property
+    def block_num(self):
+        return self.block.block_num
+
+    @property
+    def block_id(self):
+        return self.block.data.get("block_id")
+
+    @property
+    def op(self):
+        return (self.type, self.value)
+
+    def __getitem__(self, key):
+        if key == "op":
+            return self.op
+        if key == "block_num":
+            return self.block_num
+        if key == "block_id":
+            return self.block_id
+        if key == "transaction":
+            return self.transaction
+        if key == "transaction_index":
+            return self.transaction_index
+        if key == "op_index":
+            return self.op_index
+        return self.value[key]
+
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except (KeyError, AttributeError):
+            return default
+
+    def __contains__(self, key):
+        try:
+            self[key]
+        except (KeyError, AttributeError):
+            return False
+        return True
+
+    def __getattr__(self, item):
+        if item in self.__dict__ or item in {"type", "value"}:
+            return self.__dict__[item]
+        if isinstance(self.value, dict) and item in self.value:
+            return self.value[item]
+        raise AttributeError(item)
+
+    def __repr__(self):
+        return f"<Op type={self.type} block={self.block_num}>"
 
 
 class Stream:
@@ -69,28 +145,33 @@ class Stream:
     def stream_ops(self):
         """Yields all operations from the blockchain."""
         for block in self.block_listener.stream_blocks():
-            if "transactions" not in block:
+            transactions = block["transactions"]
+            if not transactions:
                 continue
-            for trx in block["transactions"]:
-                for op in trx["operations"]:
-                    yield {
-                        "block_num": block["block_id"],
-                        "op": op,
-                    }
+            for trx_idx, trx in enumerate(transactions):
+                for op_idx, op in enumerate(trx["operations"]):
+                    op_type, op_value = op
+                    yield Op(
+                        block,
+                        op_type,
+                        op_value,
+                        transaction=trx,
+                        transaction_index=trx_idx,
+                        op_index=op_idx,
+                    )
 
     def on(self, op_type, filter_by=None, condition=None):
         """Listen for a specific operation type."""
         op_types = op_type if isinstance(op_type, list) else [op_type]
 
         for op_data in self.stream_ops():
-            operation_type, operation_value = op_data["op"]
-            if operation_type not in op_types:
+            if op_data.type not in op_types:
                 continue
 
-            if filter_by and not filter_by.items() <= operation_value.items():
+            if filter_by and not filter_by.items() <= op_data.value.items():
                 continue
 
-            if condition and not condition(operation_value):
+            if condition and not condition(op_data.value):
                 continue
 
             yield op_data

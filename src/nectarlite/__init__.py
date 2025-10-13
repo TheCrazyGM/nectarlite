@@ -19,6 +19,7 @@ __all__ = [
     "Wallet",
     "HAF",
     "Stream",
+    "Op",
     "NectarliteException",
     "NodeError",
     "MissingKeyError",
@@ -41,7 +42,7 @@ from .exceptions import (
 )
 from .haf import HAF
 from .memo import Memo
-from .stream import Stream
+from .stream import Op, Stream
 from .transaction import CustomJson, Follow, Operation, Transaction, Transfer
 from .vote import Vote
 from .wallet import Wallet
