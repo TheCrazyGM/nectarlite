@@ -74,7 +74,12 @@ class Account:
         if not self.api:
             raise ValueError("API not configured.")
 
-        accounts = self.api.call("condenser_api", "get_accounts", [[self.name]])
+        try:
+            accounts = self.api.call("condenser_api", "get_accounts", [[self.name]])
+        except Exception as exc:  # noqa: BLE001 - surface as NodeError
+            if isinstance(exc, NodeError):
+                raise
+            raise NodeError(str(exc)) from exc
         if not accounts:
             raise ValueError(f"Account '{self.name}' not found.")
         self._data = accounts[0]

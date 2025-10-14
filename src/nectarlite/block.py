@@ -1,5 +1,7 @@
 """Block class for interacting with Hive blocks."""
 
+from .exceptions import NodeError
+
 
 class Block:
     """Block class for interacting with Hive blocks."""
@@ -18,7 +20,12 @@ class Block:
         """Fetch the block data from the blockchain."""
         if not self.api:
             raise ValueError("API not configured.")
-        self._data = self.api.call("condenser_api", "get_block", [self.block_num])
+        try:
+            self._data = self.api.call("condenser_api", "get_block", [self.block_num])
+        except Exception as exc:  # noqa: BLE001 - surface as NodeError
+            if isinstance(exc, NodeError):
+                raise
+            raise NodeError(str(exc)) from exc
 
     @property
     def data(self):

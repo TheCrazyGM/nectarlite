@@ -1,6 +1,7 @@
 """Comment class for interacting with Hive comments and posts."""
 
 from .amount import Amount
+from .exceptions import NodeError
 
 
 class Comment:
@@ -32,9 +33,14 @@ class Comment:
         if not self.api:
             raise ValueError("API not configured.")
 
-        content = self.api.call(
-            "condenser_api", "get_content", [self.author, self.permlink]
-        )
+        try:
+            content = self.api.call(
+                "condenser_api", "get_content", [self.author, self.permlink]
+            )
+        except Exception as exc:  # noqa: BLE001 - surface as NodeError
+            if isinstance(exc, NodeError):
+                raise
+            raise NodeError(str(exc)) from exc
         if not content or not content["author"]:
             raise ValueError(f"Comment @{self.author}/{self.permlink} not found.")
         self._data = content

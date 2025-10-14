@@ -50,28 +50,48 @@ class DynamicGlobalProperties(_LazyResource):
     """Wrapper for ``condenser_api.get_dynamic_global_properties``."""
 
     def _fetch(self) -> Dict[str, Any]:
-        return self.api.call("condenser_api", "get_dynamic_global_properties", [])
+        try:
+            return self.api.call("condenser_api", "get_dynamic_global_properties", [])
+        except Exception as exc:  # noqa: BLE001 - surface as NodeError
+            if isinstance(exc, NodeError):
+                raise
+            raise NodeError(str(exc)) from exc
 
 
 class ChainProperties(_LazyResource):
     """Wrapper for ``condenser_api.get_chain_properties``."""
 
     def _fetch(self) -> Dict[str, Any]:
-        return self.api.call("condenser_api", "get_chain_properties", [])
+        try:
+            return self.api.call("condenser_api", "get_chain_properties", [])
+        except Exception as exc:  # noqa: BLE001 - surface as NodeError
+            if isinstance(exc, NodeError):
+                raise
+            raise NodeError(str(exc)) from exc
 
 
 class WitnessSchedule(_LazyResource):
     """Wrapper for ``condenser_api.get_witness_schedule``."""
 
     def _fetch(self) -> Dict[str, Any]:
-        return self.api.call("condenser_api", "get_witness_schedule", [])
+        try:
+            return self.api.call("condenser_api", "get_witness_schedule", [])
+        except Exception as exc:  # noqa: BLE001 - surface as NodeError
+            if isinstance(exc, NodeError):
+                raise
+            raise NodeError(str(exc)) from exc
 
 
 class FeedHistory(_LazyResource):
     """Wrapper for ``condenser_api.get_feed_history``."""
 
     def _fetch(self) -> Dict[str, Any]:
-        return self.api.call("condenser_api", "get_feed_history", [])
+        try:
+            return self.api.call("condenser_api", "get_feed_history", [])
+        except Exception as exc:  # noqa: BLE001 - surface as NodeError
+            if isinstance(exc, NodeError):
+                raise
+            raise NodeError(str(exc)) from exc
 
 
 class RewardFunds(_LazyResource):
@@ -151,13 +171,25 @@ class MedianHistoryPrice(_LazyResource):
     """Wrapper for ``condenser_api.get_current_median_history_price``."""
 
     def _fetch(self) -> Dict[str, Any]:
-        return self.api.call("condenser_api", "get_current_median_history_price", [])
+        try:
+            return self.api.call(
+                "condenser_api", "get_current_median_history_price", []
+            )
+        except Exception as exc:  # noqa: BLE001 - surface as NodeError
+            if isinstance(exc, NodeError):
+                raise
+            raise NodeError(str(exc)) from exc
 
 
 def get_block(api: Api, block_num: int) -> Optional[Dict[str, Any]]:
     """Return the block payload for ``block_num`` using ``block_api.get_block``."""
 
-    response = api.call("block_api", "get_block", {"block_num": block_num})
+    try:
+        response = api.call("block_api", "get_block", {"block_num": block_num})
+    except Exception as exc:  # noqa: BLE001 - surface as NodeError
+        if isinstance(exc, NodeError):
+            raise
+        raise NodeError(str(exc)) from exc
     if isinstance(response, dict):
         return response.get("block") or response.get("result")
     return None
@@ -166,11 +198,16 @@ def get_block(api: Api, block_num: int) -> Optional[Dict[str, Any]]:
 def get_ops_in_block(api: Api, block_num: int, virtual_only: bool = False) -> List[Any]:
     """Return operations for a block via ``condenser_api.get_ops_in_block``."""
 
-    response = api.call(
-        "condenser_api",
-        "get_ops_in_block",
-        [block_num, virtual_only],
-    )
+    try:
+        response = api.call(
+            "condenser_api",
+            "get_ops_in_block",
+            [block_num, virtual_only],
+        )
+    except Exception as exc:  # noqa: BLE001 - surface as NodeError
+        if isinstance(exc, NodeError):
+            raise
+        raise NodeError(str(exc)) from exc
     if isinstance(response, list):
         return response
     if isinstance(response, dict):
@@ -186,7 +223,14 @@ def get_account_history(
 ) -> List[Any]:
     """Return account history using ``condenser_api.get_account_history``."""
 
-    response = api.call("condenser_api", "get_account_history", [account, start, limit])
+    try:
+        response = api.call(
+            "condenser_api", "get_account_history", [account, start, limit]
+        )
+    except Exception as exc:  # noqa: BLE001 - surface as NodeError
+        if isinstance(exc, NodeError):
+            raise
+        raise NodeError(str(exc)) from exc
     if isinstance(response, list):
         return response
     if isinstance(response, dict):
@@ -197,7 +241,12 @@ def get_account_history(
 def get_rc_accounts(api: Api, accounts: Iterable[str]) -> List[Dict[str, Any]]:
     """Return RC metrics for the provided ``accounts`` using ``rc_api.find_rc_accounts``."""
 
-    response = api.call("rc_api", "find_rc_accounts", {"accounts": list(accounts)})
+    try:
+        response = api.call("rc_api", "find_rc_accounts", {"accounts": list(accounts)})
+    except Exception as exc:  # noqa: BLE001 - surface as NodeError
+        if isinstance(exc, NodeError):
+            raise
+        raise NodeError(str(exc)) from exc
     if isinstance(response, dict):
         return response.get("rc_accounts") or response.get("result") or []
     if isinstance(response, list):
@@ -236,7 +285,12 @@ def get_ranked_posts(
     payload = {"sort": sort, "limit": limit}
     if tag:
         payload["tag"] = tag
-    response = api.call("bridge", "get_ranked_posts", payload)
+    try:
+        response = api.call("bridge", "get_ranked_posts", payload)
+    except Exception as exc:  # noqa: BLE001 - surface as NodeError
+        if isinstance(exc, NodeError):
+            raise
+        raise NodeError(str(exc)) from exc
     if isinstance(response, dict):
         return response.get("result") or response.get("posts") or []
     if isinstance(response, list):

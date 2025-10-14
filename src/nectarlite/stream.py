@@ -3,6 +3,7 @@ import logging
 import time
 
 from .block import Block
+from .exceptions import NodeError
 
 log = logging.getLogger(__name__)
 
@@ -20,7 +21,12 @@ class BlockListener:
 
     def get_last_block_height(self):
         """Get the last block height based on the chosen blockchain mode."""
-        props = self.api.call("condenser_api", "get_dynamic_global_properties")
+        try:
+            props = self.api.call("condenser_api", "get_dynamic_global_properties")
+        except Exception as exc:  # noqa: BLE001 - surface as NodeError
+            if isinstance(exc, NodeError):
+                raise
+            raise NodeError(str(exc)) from exc
         if self.blockchain_mode == "irreversible":
             return props["last_irreversible_block_num"]
         elif self.blockchain_mode == "head":
@@ -42,9 +48,14 @@ class BlockListener:
                     return
 
                 log.debug(f"Getting block: {current_block}")
-                block_data = self.api.call(
-                    "condenser_api", "get_block", [current_block]
-                )
+                try:
+                    block_data = self.api.call(
+                        "condenser_api", "get_block", [current_block]
+                    )
+                except Exception as exc:  # noqa: BLE001 - surface as NodeError
+                    if isinstance(exc, NodeError):
+                        raise
+                    raise NodeError(str(exc)) from exc
                 if block_data:
                     yield Block(
                         current_block,

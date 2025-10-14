@@ -1,5 +1,7 @@
 """Vote class for interacting with Hive votes."""
 
+from .exceptions import NodeError
+
 
 class Vote:
     """Vote class for interacting with Hive votes."""
@@ -25,9 +27,14 @@ class Vote:
         if not self.api:
             raise ValueError("API not configured.")
 
-        active_votes = self.api.call(
-            "condenser_api", "get_active_votes", [self.author, self.permlink]
-        )
+        try:
+            active_votes = self.api.call(
+                "condenser_api", "get_active_votes", [self.author, self.permlink]
+            )
+        except Exception as exc:  # noqa: BLE001 - surface as NodeError
+            if isinstance(exc, NodeError):
+                raise
+            raise NodeError(str(exc)) from exc
         vote_data = None
         for v in active_votes:
             if v["voter"] == self.voter:
