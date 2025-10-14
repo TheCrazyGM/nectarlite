@@ -70,6 +70,31 @@ for vote in listener.on("vote"):
     print(f"New Vote! Voter: {voter}, Post: @{author}/{vote.permlink}")
 ```
 
+Prefer asyncio? The async counterpart behaves the same while keeping your event loop responsive.
+
+```python
+import asyncio
+
+from nectarlite import Api, AsyncStream
+
+
+async def main():
+    listener = AsyncStream(
+        api=Api(["https://api.hive.blog"]),
+        blockchain_mode="head",
+    )
+
+    print("Listening for new votes asynchronously... (Ctrl+C to stop)")
+    async for vote in listener.on("vote"):
+        voter = vote.voter
+        author = vote.author
+        print(f"New Vote! Voter: {voter}, Post: @{author}/{vote.permlink}")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
 ### Creating and Broadcasting a Transfer with an Encrypted Memo
 
 Set the `ACTIVE_WIF` and `MEMO_WIF` environment variables before running the example:
