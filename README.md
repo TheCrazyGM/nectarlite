@@ -9,7 +9,7 @@ Nectarlite is a lightweight Python library for interacting with the Hive blockch
 - **Transaction Building & Signing:** Construct and sign Hive transactions.
 - **High-Level Abstractions:** Simple classes for Account, Comment, Vote, Asset, and Amount.
 - **Account Insights:** Built-in helpers for reputation, voting power, and resource credits.
-- **HAF Integration:** Access to the Hive Account Feed (HAF) for advanced queries.
+- **HAF Integration:** Access to the Hive Application Framework (HAF) for advanced queries.
 - **Memo Encryption:** Encrypt and decrypt memos for private communication.
 - **Real-Time Stream:** Stream blocks and operations as they happen.
 - **Read-Only Helpers:** Convenience wrappers for popular Hive APIs (dynamic global props, feed history, reward funds, market ticker, ranked posts).
