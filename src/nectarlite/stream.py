@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import asyncio
 import logging
 import time
 
@@ -190,4 +191,121 @@ class Stream:
     def stream_blocks(self):
         """Yields all blocks from the blockchain."""
         for block in self.block_listener.stream_blocks():
+            yield block
+
+
+class AsyncBlockListener:
+    """Async variant of :class:`BlockListener` using asyncio-friendly calls."""
+
+    def __init__(
+        self, api, blockchain_mode="irreversible", start_block=None, end_block=None
+    ):
+        self.api = api
+        self.blockchain_mode = blockchain_mode
+        self.start_block = start_block
+        self.end_block = end_block
+
+    async def _call(self, api_name, method, params=None):
+        params = params or []
+        try:
+            return await asyncio.to_thread(self.api.call, api_name, method, params)
+        except Exception as exc:  # noqa: BLE001 - surface as NodeError
+            if isinstance(exc, NodeError):
+                raise
+            raise NodeError(str(exc)) from exc
+
+    async def get_last_block_height(self):
+        props = await self._call("condenser_api", "get_dynamic_global_properties", [])
+        if self.blockchain_mode == "irreversible":
+            return props["last_irreversible_block_num"]
+        elif self.blockchain_mode == "head":
+            return props["head_block_number"]
+        else:
+            raise ValueError(
+                "Invalid blockchain mode. Must be 'irreversible' or 'head'."
+            )
+
+    async def stream_blocks(self):
+        """Asynchronously yield full blocks from the blockchain."""
+
+        current_block = self.start_block
+        if not current_block:
+            current_block = await self.get_last_block_height()
+
+        while True:
+            while (await self.get_last_block_height() - current_block) > 0:
+                if self.end_block and current_block > self.end_block:
+                    return
+
+                log.debug(f"Getting block: {current_block}")
+                block_data = await self._call(
+                    "condenser_api", "get_block", [current_block]
+                )
+                if block_data:
+                    yield Block(
+                        current_block,
+                        api=self.api,
+                        data=block_data,
+                    )
+
+                current_block += 1
+
+            log.debug("Waiting for new blocks...")
+            await asyncio.sleep(3)
+
+
+class AsyncStream:
+    """Async listener mirroring :class:`Stream` semantics with asyncio support."""
+
+    def __init__(
+        self, api, blockchain_mode="irreversible", start_block=None, end_block=None
+    ):
+        self.api = api
+        self.block_listener = AsyncBlockListener(
+            self.api,
+            blockchain_mode=blockchain_mode,
+            start_block=start_block,
+            end_block=end_block,
+        )
+
+    async def stream_ops(self):
+        """Asynchronously yield all operations from the blockchain."""
+
+        async for block in self.block_listener.stream_blocks():
+            transactions = block["transactions"]
+            if not transactions:
+                continue
+            for trx_idx, trx in enumerate(transactions):
+                for op_idx, op in enumerate(trx["operations"]):
+                    op_type, op_value = op
+                    yield Op(
+                        block,
+                        op_type,
+                        op_value,
+                        transaction=trx,
+                        transaction_index=trx_idx,
+                        op_index=op_idx,
+                    )
+
+    async def on(self, op_type, filter_by=None, condition=None):
+        """Asynchronously listen for a specific operation type."""
+
+        op_types = op_type if isinstance(op_type, list) else [op_type]
+
+        async for op_data in self.stream_ops():
+            if op_data.type not in op_types:
+                continue
+
+            if filter_by and not filter_by.items() <= op_data.value.items():
+                continue
+
+            if condition and not condition(op_data.value):
+                continue
+
+            yield op_data
+
+    async def stream_blocks(self):
+        """Asynchronously yield all blocks from the blockchain."""
+
+        async for block in self.block_listener.stream_blocks():
             yield block
