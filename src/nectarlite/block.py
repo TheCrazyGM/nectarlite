@@ -1,6 +1,11 @@
 """Block class for interacting with Hive blocks."""
 
+import logging
+
 from .exceptions import NodeError
+
+
+log = logging.getLogger(__name__)
 
 
 class Block:
@@ -19,12 +24,15 @@ class Block:
     def refresh(self):
         """Fetch the block data from the blockchain."""
         if not self.api:
+            log.error("Cannot refresh block %s: API not configured.", self.block_num)
             raise ValueError("API not configured.")
+        log.debug("Requesting block %s.", self.block_num)
         try:
             self._data = self.api.call("condenser_api", "get_block", [self.block_num])
         except Exception as exc:  # noqa: BLE001 - surface as NodeError
             if isinstance(exc, NodeError):
                 raise
+            log.error("Error retrieving block %s: %s", self.block_num, exc)
             raise NodeError(str(exc)) from exc
 
     @property

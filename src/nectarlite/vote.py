@@ -1,6 +1,11 @@
 """Vote class for interacting with Hive votes."""
 
+import logging
+
 from .exceptions import NodeError
+
+
+log = logging.getLogger(__name__)
 
 
 class Vote:
@@ -25,8 +30,20 @@ class Vote:
     def refresh(self):
         """Fetch the vote data from the blockchain."""
         if not self.api:
+            log.error(
+                "Cannot refresh vote %s on %s/%s: API not configured.",
+                self.voter,
+                self.author,
+                self.permlink,
+            )
             raise ValueError("API not configured.")
 
+        log.debug(
+            "Requesting vote data for %s on %s/%s.",
+            self.voter,
+            self.author,
+            self.permlink,
+        )
         try:
             active_votes = self.api.call(
                 "condenser_api", "get_active_votes", [self.author, self.permlink]
@@ -34,6 +51,13 @@ class Vote:
         except Exception as exc:  # noqa: BLE001 - surface as NodeError
             if isinstance(exc, NodeError):
                 raise
+            log.error(
+                "Error retrieving vote %s on %s/%s: %s",
+                self.voter,
+                self.author,
+                self.permlink,
+                exc,
+            )
             raise NodeError(str(exc)) from exc
         vote_data = None
         for v in active_votes:
@@ -42,6 +66,12 @@ class Vote:
                 break
 
         if not vote_data:
+            log.warning(
+                "Vote %s on %s/%s not found.",
+                self.voter,
+                self.author,
+                self.permlink,
+            )
             raise ValueError(
                 f"Vote from {self.voter} on @{self.author}/{self.permlink} not found."
             )

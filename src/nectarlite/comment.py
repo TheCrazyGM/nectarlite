@@ -1,7 +1,12 @@
 """Comment class for interacting with Hive comments and posts."""
 
+import logging
+
 from .amount import Amount
 from .exceptions import NodeError
+
+
+log = logging.getLogger(__name__)
 
 
 class Comment:
@@ -31,8 +36,18 @@ class Comment:
     def refresh(self):
         """Fetch the comment data from the blockchain."""
         if not self.api:
+            log.error(
+                "Cannot refresh comment %s/%s: API not configured.",
+                self.author,
+                self.permlink,
+            )
             raise ValueError("API not configured.")
 
+        log.debug(
+            "Requesting comment data for %s/%s.",
+            self.author,
+            self.permlink,
+        )
         try:
             content = self.api.call(
                 "condenser_api", "get_content", [self.author, self.permlink]
@@ -40,8 +55,19 @@ class Comment:
         except Exception as exc:  # noqa: BLE001 - surface as NodeError
             if isinstance(exc, NodeError):
                 raise
+            log.error(
+                "Error retrieving comment %s/%s: %s",
+                self.author,
+                self.permlink,
+                exc,
+            )
             raise NodeError(str(exc)) from exc
         if not content or not content["author"]:
+            log.warning(
+                "Comment %s/%s not found.",
+                self.author,
+                self.permlink,
+            )
             raise ValueError(f"Comment @{self.author}/{self.permlink} not found.")
         self._data = content
 

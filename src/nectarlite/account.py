@@ -1,11 +1,15 @@
 """Account class for interacting with Hive accounts."""
 
+import logging
 from datetime import datetime, timezone
 
 from .amount import Amount
 from .exceptions import NodeError
 from .haf import HAF
 from .transaction import Follow, Transaction
+
+
+log = logging.getLogger(__name__)
 
 VOTING_MANA_REGENERATION_SECONDS = 5 * 24 * 60 * 60
 RC_MANA_REGENERATION_SECONDS = 5 * 24 * 60 * 60
@@ -72,15 +76,19 @@ class Account:
     def refresh(self):
         """Fetch the account data from the blockchain."""
         if not self.api:
+            log.error("Cannot refresh account '%s': API not configured.", self.name)
             raise ValueError("API not configured.")
 
+        log.debug("Requesting account data for '%s'.", self.name)
         try:
             accounts = self.api.call("condenser_api", "get_accounts", [[self.name]])
         except Exception as exc:  # noqa: BLE001 - surface as NodeError
             if isinstance(exc, NodeError):
                 raise
+            log.error("Error retrieving account '%s': %s", self.name, exc)
             raise NodeError(str(exc)) from exc
         if not accounts:
+            log.warning("Account '%s' not found.", self.name)
             raise ValueError(f"Account '{self.name}' not found.")
         self._data = accounts[0]
 
@@ -236,6 +244,9 @@ class Account:
 
         if refresh or not self._data:
             if not self.api:
+                log.error(
+                    "Cannot fetch voting power for '%s': API not configured.", self.name
+                )
                 raise ValueError("API not configured.")
             self.refresh()
 
@@ -288,13 +299,15 @@ class Account:
             return self._rc_info
 
         if not self.api:
+            log.error("Cannot fetch RC info for '%s': API not configured.", self.name)
             raise ValueError("API not configured.")
 
         try:
             response = self.api.call(
                 "rc_api", "find_rc_accounts", {"accounts": [self.name]}
             )
-        except NodeError:
+        except NodeError as exc:
+            log.warning("Failed to fetch RC info for '%s': %s", self.name, exc)
             self._rc_info = None
             return None
 
@@ -305,6 +318,7 @@ class Account:
             rc_accounts = response
 
         if not rc_accounts:
+            log.warning("No RC data returned for '%s'.", self.name)
             self._rc_info = None
             return None
 

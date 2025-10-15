@@ -1,9 +1,13 @@
 """Convenience helpers for common read-only Hive RPC calls."""
 
+import logging
 from typing import Any, Dict, Iterable, List, Optional
 
 from .api import Api
 from .exceptions import NodeError
+
+
+log = logging.getLogger(__name__)
 
 
 class _LazyResource:
@@ -17,6 +21,7 @@ class _LazyResource:
         raise NotImplementedError
 
     def refresh(self) -> "_LazyResource":
+        log.debug("Refreshing resource %s.", self.__class__.__name__)
         self._data = self._fetch()
         return self
 
@@ -50,11 +55,13 @@ class DynamicGlobalProperties(_LazyResource):
     """Wrapper for ``condenser_api.get_dynamic_global_properties``."""
 
     def _fetch(self) -> Dict[str, Any]:
+        log.debug("Fetching dynamic global properties.")
         try:
             return self.api.call("condenser_api", "get_dynamic_global_properties", [])
         except Exception as exc:  # noqa: BLE001 - surface as NodeError
             if isinstance(exc, NodeError):
                 raise
+            log.error("Failed to fetch dynamic global properties: %s", exc)
             raise NodeError(str(exc)) from exc
 
 
@@ -62,11 +69,13 @@ class ChainProperties(_LazyResource):
     """Wrapper for ``condenser_api.get_chain_properties``."""
 
     def _fetch(self) -> Dict[str, Any]:
+        log.debug("Fetching chain properties.")
         try:
             return self.api.call("condenser_api", "get_chain_properties", [])
         except Exception as exc:  # noqa: BLE001 - surface as NodeError
             if isinstance(exc, NodeError):
                 raise
+            log.error("Failed to fetch chain properties: %s", exc)
             raise NodeError(str(exc)) from exc
 
 
@@ -74,11 +83,13 @@ class WitnessSchedule(_LazyResource):
     """Wrapper for ``condenser_api.get_witness_schedule``."""
 
     def _fetch(self) -> Dict[str, Any]:
+        log.debug("Fetching witness schedule.")
         try:
             return self.api.call("condenser_api", "get_witness_schedule", [])
         except Exception as exc:  # noqa: BLE001 - surface as NodeError
             if isinstance(exc, NodeError):
                 raise
+            log.error("Failed to fetch witness schedule: %s", exc)
             raise NodeError(str(exc)) from exc
 
 
@@ -86,11 +97,13 @@ class FeedHistory(_LazyResource):
     """Wrapper for ``condenser_api.get_feed_history``."""
 
     def _fetch(self) -> Dict[str, Any]:
+        log.debug("Fetching feed history.")
         try:
             return self.api.call("condenser_api", "get_feed_history", [])
         except Exception as exc:  # noqa: BLE001 - surface as NodeError
             if isinstance(exc, NodeError):
                 raise
+            log.error("Failed to fetch feed history: %s", exc)
             raise NodeError(str(exc)) from exc
 
 
@@ -100,12 +113,14 @@ class RewardFunds(_LazyResource):
     _FALLBACK_FUNDS = ("post", "comment")
 
     def _fetch(self) -> List[Dict[str, Any]]:
+        log.debug("Fetching reward funds information.")
         funds = self._fetch_database_reward_funds()
         if funds:
             return funds
         return self._fetch_condenser_reward_funds()
 
     def _fetch_database_reward_funds(self) -> List[Dict[str, Any]]:
+        log.debug("Fetching reward funds via database_api.")
         try:
             response = self.api.call("database_api", "get_reward_funds", {})
         except NodeError:
@@ -121,14 +136,20 @@ class RewardFunds(_LazyResource):
         return []
 
     def _fetch_condenser_reward_funds(self) -> List[Dict[str, Any]]:
+        log.debug("Fetching reward funds via condenser fallback.")
         results: List[Dict[str, Any]] = []
         for name in self._FALLBACK_FUNDS:
             try:
                 response = self.api.call("condenser_api", "get_reward_fund", [name])
             except NodeError:
                 # condenser endpoint unavailable across nodes
+                log.warning(
+                    "Condenser reward fund endpoint unavailable while fetching '%s'.",
+                    name,
+                )
                 return results
             except Exception:
+                log.debug("Skipping reward fund '%s' due to unexpected response.", name)
                 continue
 
             normalized = self._normalize_fund_response(response, name)
@@ -184,20 +205,27 @@ class MedianHistoryPrice(_LazyResource):
 def get_block(api: Api, block_num: int) -> Optional[Dict[str, Any]]:
     """Return the block payload for ``block_num`` using ``block_api.get_block``."""
 
+    log.debug("Fetching block %s.", block_num)
     try:
         response = api.call("block_api", "get_block", {"block_num": block_num})
     except Exception as exc:  # noqa: BLE001 - surface as NodeError
         if isinstance(exc, NodeError):
             raise
+        log.error("Failed to fetch block %s: %s", block_num, exc)
         raise NodeError(str(exc)) from exc
     if isinstance(response, dict):
         return response.get("block") or response.get("result")
     return None
 
 
-def get_ops_in_block(api: Api, block_num: int, virtual_only: bool = False) -> List[Any]:
+def get_ops_in_block(
+    api: Api,
+    block_num: int,
+    virtual_only: bool = False,
+) -> List[Any]:
     """Return operations for a block via ``condenser_api.get_ops_in_block``."""
 
+    log.debug("Fetching ops in block %s (virtual_only=%s).", block_num, virtual_only)
     try:
         response = api.call(
             "condenser_api",
@@ -207,6 +235,7 @@ def get_ops_in_block(api: Api, block_num: int, virtual_only: bool = False) -> Li
     except Exception as exc:  # noqa: BLE001 - surface as NodeError
         if isinstance(exc, NodeError):
             raise
+        log.error("Failed to fetch ops for block %s: %s", block_num, exc)
         raise NodeError(str(exc)) from exc
     if isinstance(response, list):
         return response
@@ -223,6 +252,12 @@ def get_account_history(
 ) -> List[Any]:
     """Return account history using ``condenser_api.get_account_history``."""
 
+    log.debug(
+        "Fetching account history for '%s' starting at %s (limit=%s).",
+        account,
+        start,
+        limit,
+    )
     try:
         response = api.call(
             "condenser_api", "get_account_history", [account, start, limit]
@@ -230,6 +265,7 @@ def get_account_history(
     except Exception as exc:  # noqa: BLE001 - surface as NodeError
         if isinstance(exc, NodeError):
             raise
+        log.error("Failed to fetch account history for '%s': %s", account, exc)
         raise NodeError(str(exc)) from exc
     if isinstance(response, list):
         return response
@@ -241,11 +277,14 @@ def get_account_history(
 def get_rc_accounts(api: Api, accounts: Iterable[str]) -> List[Dict[str, Any]]:
     """Return RC metrics for the provided ``accounts`` using ``rc_api.find_rc_accounts``."""
 
+    account_list = list(accounts)
+    log.debug("Fetching RC accounts for %s.", account_list)
     try:
-        response = api.call("rc_api", "find_rc_accounts", {"accounts": list(accounts)})
+        response = api.call("rc_api", "find_rc_accounts", {"accounts": account_list})
     except Exception as exc:  # noqa: BLE001 - surface as NodeError
         if isinstance(exc, NodeError):
             raise
+        log.error("Failed to fetch RC accounts: %s", exc)
         raise NodeError(str(exc)) from exc
     if isinstance(response, dict):
         return response.get("rc_accounts") or response.get("result") or []
@@ -257,9 +296,11 @@ def get_rc_accounts(api: Api, accounts: Iterable[str]) -> List[Dict[str, Any]]:
 def get_market_ticker(api: Api) -> Dict[str, Any]:
     """Return the market ticker via ``market_history_api.get_ticker``."""
 
+    log.debug("Fetching market ticker.")
     try:
         response = api.call("market_history_api", "get_ticker", {})
     except NodeError:
+        log.warning("Failed to fetch market ticker due to node error.")
         return {}
     return response or {}
 
@@ -267,9 +308,11 @@ def get_market_ticker(api: Api) -> Dict[str, Any]:
 def get_market_volume(api: Api) -> Dict[str, Any]:
     """Return 24h volume via ``market_history_api.get_volume""."""
 
+    log.debug("Fetching market volume.")
     try:
         response = api.call("market_history_api", "get_volume", {})
     except NodeError:
+        log.warning("Failed to fetch market volume due to node error.")
         return {}
     return response or {}
 
@@ -285,11 +328,13 @@ def get_ranked_posts(
     payload = {"sort": sort, "limit": limit}
     if tag:
         payload["tag"] = tag
+    log.debug("Fetching ranked posts with payload %s.", payload)
     try:
         response = api.call("bridge", "get_ranked_posts", payload)
     except Exception as exc:  # noqa: BLE001 - surface as NodeError
         if isinstance(exc, NodeError):
             raise
+        log.error("Failed to fetch ranked posts: %s", exc)
         raise NodeError(str(exc)) from exc
     if isinstance(response, dict):
         return response.get("result") or response.get("posts") or []

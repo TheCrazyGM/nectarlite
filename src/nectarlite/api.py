@@ -1,8 +1,12 @@
 """Api class for making RPC calls to Hive nodes."""
 
+import logging
 import requests
 
 from .exceptions import NodeError
+
+
+log = logging.getLogger(__name__)
 
 
 class Api:
@@ -51,8 +55,8 @@ class Api:
                     raise NodeError(result["error"]["message"])
                 return result["result"]
             except requests.exceptions.RequestException as e:
-                print(f"Error calling {node_url}: {e}")
+                log.error(f"Error calling {node_url}: {e}")
             except NodeError as e:
-                print(f"Error calling {node_url}: {e}")
+                log.error(f"Error calling {node_url}: {e}")
 
         raise NodeError("All nodes failed.")
