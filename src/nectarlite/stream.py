@@ -41,30 +41,41 @@ class BlockListener:
         """Yields full blocks from the blockchain."""
         current_block = self.start_block
         if not current_block:
-            current_block = self.get_last_block_height()
+            while True:
+                try:
+                    current_block = self.get_last_block_height()
+                    break
+                except NodeError as exc:
+                    log.warning("Unable to determine starting block: %s", exc)
+                    time.sleep(3)
 
         while True:
-            while (self.get_last_block_height() - current_block) > 0:
-                if self.end_block and current_block > self.end_block:
-                    return
+            try:
+                while (self.get_last_block_height() - current_block) > 0:
+                    if self.end_block and current_block > self.end_block:
+                        return
 
-                log.debug(f"Getting block: {current_block}")
-                try:
-                    block_data = self.api.call(
-                        "condenser_api", "get_block", [current_block]
-                    )
-                except Exception as exc:  # noqa: BLE001 - surface as NodeError
-                    if isinstance(exc, NodeError):
-                        raise
-                    raise NodeError(str(exc)) from exc
-                if block_data:
-                    yield Block(
-                        current_block,
-                        api=self.api,
-                        data=block_data,
-                    )
+                    log.debug(f"Getting block: {current_block}")
+                    try:
+                        block_data = self.api.call(
+                            "condenser_api", "get_block", [current_block]
+                        )
+                    except Exception as exc:  # noqa: BLE001 - surface as NodeError
+                        if isinstance(exc, NodeError):
+                            raise
+                        raise NodeError(str(exc)) from exc
+                    if block_data:
+                        yield Block(
+                            current_block,
+                            api=self.api,
+                            data=block_data,
+                        )
 
-                current_block += 1
+                    current_block += 1
+            except NodeError as exc:
+                log.warning("Node error while streaming blocks: %s", exc)
+                time.sleep(3)
+                continue
 
             log.debug("Waiting for new blocks...")
             time.sleep(3)
@@ -230,25 +241,36 @@ class AsyncBlockListener:
 
         current_block = self.start_block
         if not current_block:
-            current_block = await self.get_last_block_height()
+            while True:
+                try:
+                    current_block = await self.get_last_block_height()
+                    break
+                except NodeError as exc:
+                    log.warning("Unable to determine starting block: %s", exc)
+                    await asyncio.sleep(3)
 
         while True:
-            while (await self.get_last_block_height() - current_block) > 0:
-                if self.end_block and current_block > self.end_block:
-                    return
+            try:
+                while (await self.get_last_block_height() - current_block) > 0:
+                    if self.end_block and current_block > self.end_block:
+                        return
 
-                log.debug(f"Getting block: {current_block}")
-                block_data = await self._call(
-                    "condenser_api", "get_block", [current_block]
-                )
-                if block_data:
-                    yield Block(
-                        current_block,
-                        api=self.api,
-                        data=block_data,
+                    log.debug(f"Getting block: {current_block}")
+                    block_data = await self._call(
+                        "condenser_api", "get_block", [current_block]
                     )
+                    if block_data:
+                        yield Block(
+                            current_block,
+                            api=self.api,
+                            data=block_data,
+                        )
 
-                current_block += 1
+                    current_block += 1
+            except NodeError as exc:
+                log.warning("Node error while streaming blocks: %s", exc)
+                await asyncio.sleep(3)
+                continue
 
             log.debug("Waiting for new blocks...")
             await asyncio.sleep(3)
