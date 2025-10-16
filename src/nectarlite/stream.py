@@ -215,6 +215,10 @@ class AsyncBlockListener:
         self.blockchain_mode = blockchain_mode
         self.start_block = start_block
         self.end_block = end_block
+        self._closed = False
+
+    def close(self):
+        self._closed = True
 
     async def _call(self, api_name, method, params=None):
         params = params or []
@@ -241,17 +245,22 @@ class AsyncBlockListener:
 
         current_block = self.start_block
         if not current_block:
-            while True:
+            while not self._closed:
                 try:
                     current_block = await self.get_last_block_height()
                     break
                 except NodeError as exc:
                     log.warning("Unable to determine starting block: %s", exc)
                     await asyncio.sleep(3)
+            if self._closed:
+                return
 
-        while True:
+        while not self._closed:
             try:
-                while (await self.get_last_block_height() - current_block) > 0:
+                while (
+                    not self._closed
+                    and (await self.get_last_block_height() - current_block) > 0
+                ):
                     if self.end_block and current_block > self.end_block:
                         return
 
@@ -269,10 +278,14 @@ class AsyncBlockListener:
                     current_block += 1
             except NodeError as exc:
                 log.warning("Node error while streaming blocks: %s", exc)
+                if self._closed:
+                    return
                 await asyncio.sleep(3)
                 continue
 
             log.debug("Waiting for new blocks...")
+            if self._closed:
+                return
             await asyncio.sleep(3)
 
 
@@ -289,16 +302,27 @@ class AsyncStream:
             start_block=start_block,
             end_block=end_block,
         )
+        self._closed = False
+
+    def close(self):
+        if self._closed:
+            return
+        self._closed = True
+        self.block_listener.close()
 
     async def stream_ops(self):
         """Asynchronously yield all operations from the blockchain."""
 
         async for block in self.block_listener.stream_blocks():
             transactions = block["transactions"]
+            if self._closed:
+                return
             if not transactions:
                 continue
             for trx_idx, trx in enumerate(transactions):
                 for op_idx, op in enumerate(trx["operations"]):
+                    if self._closed:
+                        return
                     op_type, op_value = op
                     yield Op(
                         block,
@@ -315,6 +339,8 @@ class AsyncStream:
         op_types = op_type if isinstance(op_type, list) else [op_type]
 
         async for op_data in self.stream_ops():
+            if self._closed:
+                return
             if op_data.type not in op_types:
                 continue
 
@@ -330,4 +356,6 @@ class AsyncStream:
         """Asynchronously yield all blocks from the blockchain."""
 
         async for block in self.block_listener.stream_blocks():
+            if self._closed:
+                return
             yield block
