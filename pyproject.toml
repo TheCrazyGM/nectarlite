@@ -4,20 +4,12 @@ version = "0.1.1"
 description = "Lean Mean Hive Machine"
 readme = "README.md"
 authors = [{ name = "Michael Garcia", email = "thecrazygm@gmail.com" }]
-requires-python = ">=3.14"
-dependencies = [
-    "requests",
-    "pycryptodome",
-    "scrypt",
-    "cryptography>=46.0.2",
-]
+requires-python = ">=3.10"
+dependencies = ["requests", "pycryptodome", "scrypt", "cryptography>=46.0.2"]
 
 [build-system]
 requires = ["uv_build>=0.9.2,<0.10.0"]
 build-backend = "uv_build"
 
 [dependency-groups]
-dev = [
-    "pytest>=8.4.2",
-    "pytest-asyncio>=1.2.0",
-]
+dev = ["pytest>=8.4.2", "pytest-asyncio>=1.2.0"]
