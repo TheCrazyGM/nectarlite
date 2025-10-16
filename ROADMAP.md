@@ -52,7 +52,7 @@ nectarlite/
 - [x] **Asset:** Create a simple `Asset` class.
 - [x] **Comment:** Create a `Comment` class with dynamic, auto-refreshing properties.
 - [x] **Vote:** Create a `Vote` class with dynamic, auto-refreshing properties.
-- [x] **HAF:** Create a `HAF` class for interacting with the Hive Account Feed.
+- [x] **HAF:** Create a `HAF` class for interacting with the Hive Application Framework.
 
 ## Phase 3: Refinement and Testing
 
