@@ -3,7 +3,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-import requests
+import httpx
 
 from nectarlite.api import Api
 
@@ -15,7 +15,7 @@ class TestApi(unittest.TestCase):
         self.nodes = ["https://api.hive.blog", "https://api.syncad.com"]
         self.api = Api(self.nodes)
 
-    @patch("requests.post")
+    @patch("httpx.Client.post")
     def test_successful_call(self, mock_post):
         """Test a successful API call."""
         mock_response = MagicMock()
@@ -26,7 +26,7 @@ class TestApi(unittest.TestCase):
         result = self.api.call("condenser_api", "get_block", [1])
         self.assertEqual(result, "success")
 
-    @patch("requests.post")
+    @patch("httpx.Client.post")
     def test_failed_call(self, mock_post):
         """Test a failed API call."""
         mock_response_success = MagicMock()
@@ -34,7 +34,7 @@ class TestApi(unittest.TestCase):
         mock_response_success.json.return_value = {"result": "success"}
 
         mock_post.side_effect = [
-            requests.exceptions.RequestException("Connection error"),
+            httpx.HTTPError("Connection error"),
             mock_response_success,
         ]
 

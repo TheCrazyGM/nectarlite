@@ -3,7 +3,7 @@ import json
 import logging
 from typing import Any, Dict, Optional
 
-import requests
+import httpx
 
 log = logging.getLogger(__name__)
 
@@ -42,16 +42,20 @@ class HAF(object):
 
         log.debug(f"Making {method} request to: {url}")
 
+        timeout = kwargs.pop("timeout", self._timeout)
+
         try:
-            timeout = kwargs.pop("timeout", self._timeout)
-            response = requests.request(
-                method, url, headers=headers, timeout=timeout, **kwargs
-            )
-            response.raise_for_status()
+            with httpx.Client(timeout=timeout) as client:
+                response = client.request(
+                    method,
+                    url,
+                    headers=headers,
+                    **kwargs,
+                )
+                response.raise_for_status()
+                return response.json()
 
-            return response.json()
-
-        except requests.RequestException as e:
+        except httpx.HTTPError as e:
             log.error(f"Request failed for {url}: {e}")
             raise
         except json.JSONDecodeError as e:
@@ -73,7 +77,7 @@ class HAF(object):
             log.debug(f"Retrieved reputation for account: {account}")
             return response
 
-        except requests.RequestException as e:
+        except httpx.HTTPError as e:
             log.warning(f"Failed to retrieve reputation for account {account}: {e}")
             return None
         except Exception as e:
@@ -91,7 +95,7 @@ class HAF(object):
             log.debug(f"Retrieved balances for account: {account}")
             return response
 
-        except requests.RequestException as e:
+        except httpx.HTTPError as e:
             log.warning(f"Failed to retrieve balances for account {account}: {e}")
             return None
         except Exception as e:

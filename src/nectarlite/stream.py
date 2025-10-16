@@ -223,6 +223,8 @@ class AsyncBlockListener:
     async def _call(self, api_name, method, params=None):
         params = params or []
         try:
+            if getattr(self.api, "is_async", False):
+                return await self.api.call(api_name, method, params)
             return await asyncio.to_thread(self.api.call, api_name, method, params)
         except Exception as exc:  # noqa: BLE001 - surface as NodeError
             if isinstance(exc, NodeError):

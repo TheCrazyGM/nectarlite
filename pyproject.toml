@@ -5,7 +5,12 @@ description = "Lean Mean Hive Machine"
 readme = "README.md"
 authors = [{ name = "Michael Garcia", email = "thecrazygm@gmail.com" }]
 requires-python = ">=3.10"
-dependencies = ["requests", "pycryptodome", "scrypt", "cryptography>=46.0.2"]
+dependencies = [
+    "pycryptodome",
+    "scrypt",
+    "cryptography>=46.0.2",
+    "httpx>=0.28.1",
+]
 
 [build-system]
 requires = ["uv_build>=0.9.2,<0.10.0"]
