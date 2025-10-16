@@ -4,6 +4,7 @@ __version__ = "0.1.0"
 
 __all__ = [
     "Api",
+    "AsyncApi",
     "Transaction",
     "Operation",
     "Transfer",
@@ -30,7 +31,7 @@ __all__ = [
 
 from .account import Account
 from .amount import Amount
-from .api import Api
+from .api import Api, AsyncApi
 from .asset import Asset
 from .block import Block
 from .comment import Comment
