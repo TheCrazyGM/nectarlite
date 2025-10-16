@@ -4,7 +4,6 @@ import logging
 
 from .exceptions import NodeError
 
-
 log = logging.getLogger(__name__)
 
 

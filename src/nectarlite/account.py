@@ -8,7 +8,6 @@ from .exceptions import NodeError
 from .haf import HAF
 from .transaction import Follow, Transaction
 
-
 log = logging.getLogger(__name__)
 
 VOTING_MANA_REGENERATION_SECONDS = 5 * 24 * 60 * 60

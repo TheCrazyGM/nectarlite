@@ -5,7 +5,6 @@ import logging
 from .amount import Amount
 from .exceptions import NodeError
 
-
 log = logging.getLogger(__name__)
 
 

@@ -1,10 +1,10 @@
 """Api class for making RPC calls to Hive nodes."""
 
 import logging
+
 import requests
 
 from .exceptions import NodeError
-
 
 log = logging.getLogger(__name__)
 

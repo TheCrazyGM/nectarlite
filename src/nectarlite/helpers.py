@@ -6,7 +6,6 @@ from typing import Any, Dict, Iterable, List, Optional
 from .api import Api
 from .exceptions import NodeError
 
-
 log = logging.getLogger(__name__)
 
 
