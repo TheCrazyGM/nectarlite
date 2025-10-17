@@ -2,7 +2,7 @@
 
 import logging
 import threading
-from typing import Iterable, List, Sequence
+from typing import Iterable, List, Mapping, Sequence
 
 import httpx
 
@@ -35,15 +35,23 @@ class Api:
             self._current_node_index = (self._current_node_index + 1) % len(self.nodes)
             return self.nodes[self._current_node_index]
 
-    def _build_payload(self, api: str, method: str, params: Iterable | None) -> dict:
+    def _build_payload(
+        self, api: str, method: str, params: Iterable | Mapping | None
+    ) -> dict:
+        if params is None:
+            payload_params: Iterable | Mapping = []
+        elif isinstance(params, Mapping):
+            payload_params = params
+        else:
+            payload_params = list(params)
         return {
             "jsonrpc": "2.0",
             "method": f"{api}.{method}",
-            "params": list(params or []),
+            "params": payload_params,
             "id": 1,
         }
 
-    def call(self, api: str, method: str, params: Iterable | None = None):
+    def call(self, api: str, method: str, params: Iterable | Mapping | None = None):
         """Make an RPC call to a Hive node."""
 
         for _ in range(len(self.nodes)):
@@ -89,15 +97,25 @@ class AsyncApi:
             self._current_node_index = (self._current_node_index + 1) % len(self.nodes)
             return self.nodes[self._current_node_index]
 
-    def _build_payload(self, api: str, method: str, params: Iterable | None) -> dict:
+    def _build_payload(
+        self, api: str, method: str, params: Iterable | Mapping | None
+    ) -> dict:
+        if params is None:
+            payload_params: Iterable | Mapping = []
+        elif isinstance(params, Mapping):
+            payload_params = params
+        else:
+            payload_params = list(params)
         return {
             "jsonrpc": "2.0",
             "method": f"{api}.{method}",
-            "params": list(params or []),
+            "params": payload_params,
             "id": 1,
         }
 
-    async def call(self, api: str, method: str, params: Iterable | None = None):
+    async def call(
+        self, api: str, method: str, params: Iterable | Mapping | None = None
+    ):
         """Asynchronously make an RPC call to a Hive node."""
 
         for _ in range(len(self.nodes)):
