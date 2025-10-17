@@ -74,21 +74,29 @@ Prefer asyncio? The async counterpart behaves the same while keeping your event 
 
 ```python
 import asyncio
+import logging
 
-from nectarlite import Api, AsyncStream
+from nectarlite.api import AsyncApi
+from nectarlite.stream import AsyncStream
 
 
 async def main():
+    logging.basicConfig(level=logging.INFO)
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+
     listener = AsyncStream(
-        api=Api(["https://api.hive.blog"]),
+        api=AsyncApi(["https://api.hive.blog"]),
         blockchain_mode="head",
     )
 
-    print("Listening for new votes asynchronously... (Ctrl+C to stop)")
+    logging.info("Listening for new votes asynchronously... (Ctrl+C to stop)")
     async for vote in listener.on("vote"):
-        voter = vote.voter
-        author = vote.author
-        print(f"New Vote! Voter: {voter}, Post: @{author}/{vote.permlink}")
+        logging.info(
+            "New Vote! Voter=%s Post=@%s/%s",
+            vote.voter,
+            vote.author,
+            vote.permlink,
+        )
 
 
 if __name__ == "__main__":
