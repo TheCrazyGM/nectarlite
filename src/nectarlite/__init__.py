@@ -8,8 +8,10 @@ __all__ = [
     "Transaction",
     "Operation",
     "Transfer",
+    "CommentVote",
     "Vote",
     "Comment",
+    "CommentOperation",
     "CustomJson",
     "Follow",
     "Amount",
@@ -45,6 +47,14 @@ from .exceptions import (
 from .haf import HAF
 from .memo import Memo
 from .stream import AsyncStream, Op, Stream
-from .transaction import CustomJson, Follow, Operation, Transaction, Transfer
-from .vote import Vote
+from .transaction import (
+    CommentOperation,
+    CustomJson,
+    Follow,
+    Operation,
+    Transaction,
+    Transfer,
+    Vote,
+)
+from .vote import CommentVote
 from .wallet import Wallet

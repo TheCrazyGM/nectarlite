@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 from nectarlite.account import Account
-from nectarlite.api import Api
-from nectarlite.vote import Vote
+from nectarlite import Api
+from nectarlite.vote import CommentVote
 
 # Initialize the API
 nodes = ["https://api.hive.blog", "https://api.syncad.com"]
@@ -32,13 +32,17 @@ try:
         print(f"Found vote from {voter_name} on @{author}/{permlink}\n")
 
         # Get the vote
-        vote = Vote(voter=voter_name, author=author, permlink=permlink, api=api)
+        vote = CommentVote(
+            voter="aggroed",
+            author="someauthor",
+            permlink="some-permlink",
+            api=api,
+        )
 
         # The vote data is automatically fetched when you access an attribute
         print(f"Voter: {vote.voter}")
         print(f"Author: {vote.author}")
         print(f"Permlink: {vote.permlink}")
-        print(f"Weight: {vote.weight}")
 
 except Exception as e:
     print(f"An error occurred: {e}")

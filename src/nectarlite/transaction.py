@@ -7,20 +7,13 @@ from .amount import Amount
 from .chain import HIVE_CHAIN_ID
 from .crypto.ecdsa import sign
 from .exceptions import TransactionError
-from .types import (
-    Array,
-    Int16,
-    PointInTime,
-    String,
-    Uint16,
-    Uint32,
-    Varint,
-)
+from .types import Array, Bool, Int16, PointInTime, String, Uint16, Uint32, Varint
 
 ops = {
     "vote": 0,
     "comment": 1,
     "transfer": 2,
+    "comment_options": 19,
     "custom_json": 18,
 }
 
@@ -103,6 +96,102 @@ class Vote(Operation):
             + bytes(String(self.params["permlink"]))
             + bytes(Int16(self.params["weight"]))
         )
+
+
+class CommentOperation(Operation):
+    """Comment (a.k.a. post) operation."""
+
+    def __init__(
+        self,
+        parent_author,
+        parent_permlink,
+        author,
+        permlink,
+        title,
+        body,
+        json_metadata,
+        api=None,
+    ):
+        super().__init__(
+            "comment",
+            {
+                "parent_author": parent_author,
+                "parent_permlink": parent_permlink,
+                "author": author,
+                "permlink": permlink,
+                "title": title,
+                "body": body,
+                "json_metadata": json_metadata,
+            },
+            api=api,
+        )
+
+    def serialize_params(self):
+        return (
+            bytes(String(self.params["parent_author"]))
+            + bytes(String(self.params["parent_permlink"]))
+            + bytes(String(self.params["author"]))
+            + bytes(String(self.params["permlink"]))
+            + bytes(String(self.params["title"]))
+            + bytes(String(self.params["body"]))
+            + bytes(String(self.params["json_metadata"]))
+        )
+
+    def to_dict(self):
+        return [self.op_name, self.params.copy()]
+
+
+class CommentOptionsOperation(Operation):
+    """Comment options operation."""
+
+    def __init__(
+        self,
+        author,
+        permlink,
+        max_accepted_payout,
+        percent_steem_dollars,
+        allow_votes,
+        allow_curation_rewards,
+        extensions=None,
+        api=None,
+    ):
+        super().__init__(
+            "comment_options",
+            {
+                "author": author,
+                "permlink": permlink,
+                "max_accepted_payout": max_accepted_payout,
+                "percent_steem_dollars": percent_steem_dollars,
+                "allow_votes": allow_votes,
+                "allow_curation_rewards": allow_curation_rewards,
+                "extensions": extensions or [],
+            },
+            api=api,
+        )
+
+    def serialize_params(self):
+        extensions = self.params["extensions"]
+        serialized_extensions = []
+        for ext in extensions:
+            if hasattr(ext, "__bytes__"):
+                serialized_extensions.append(ext)
+            else:
+                raise TransactionError(
+                    "comment_options extensions must implement __bytes__()"
+                )
+
+        return (
+            bytes(String(self.params["author"]))
+            + bytes(String(self.params["permlink"]))
+            + bytes(String(self.params["max_accepted_payout"]))
+            + bytes(Uint16(self.params["percent_steem_dollars"]))
+            + bytes(Bool(self.params["allow_votes"]))
+            + bytes(Bool(self.params["allow_curation_rewards"]))
+            + bytes(Array(serialized_extensions))
+        )
+
+    def to_dict(self):
+        return [self.op_name, self.params.copy()]
 
 
 class CustomJson(Operation):

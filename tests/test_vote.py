@@ -3,7 +3,7 @@ from unittest.mock import Mock
 import pytest
 
 from nectarlite.api import Api
-from nectarlite.vote import Vote
+from nectarlite.vote import CommentVote
 
 
 @pytest.fixture
@@ -21,7 +21,7 @@ def mock_api():
 
 
 def test_vote_dynamic_attributes(mock_api):
-    vote = Vote("testvoter", "testauthor", "test-permlink", api=mock_api)
+    vote = CommentVote("testvoter", "testauthor", "test-permlink", api=mock_api)
 
     # Test dynamic attributes
     assert vote.voter == "testvoter"

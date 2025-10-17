@@ -1,4 +1,4 @@
-"""Vote class for interacting with Hive votes."""
+"""CommentVote model for interacting with Hive votes."""
 
 import logging
 
@@ -7,17 +7,11 @@ from .exceptions import NodeError
 log = logging.getLogger(__name__)
 
 
-class Vote:
-    """Vote class for interacting with Hive votes."""
+class CommentVote:
+    """CommentVote class for interacting with Hive votes."""
 
     def __init__(self, voter, author, permlink, api=None):
-        """Initialize the Vote class.
-
-        :param str voter: The voter.
-        :param str author: The author of the comment or post.
-        :param str permlink: The permlink of the comment or post.
-        :param Api api: An instance of the Api class.
-        """
+        """Initialize the comment vote wrapper."""
         self.voter = voter
         self.author = author
         self.permlink = permlink
@@ -96,4 +90,4 @@ class Vote:
         return self._data.get(key)
 
     def __str__(self):
-        return f"<Vote by {self.voter} on @{self.author}/{self.permlink}>"
+        return f"<CommentVote voter={self.voter} author={self.author} permlink={self.permlink}>"
