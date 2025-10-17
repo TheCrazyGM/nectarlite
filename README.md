@@ -172,3 +172,5 @@ else:
 ```
 
 See `examples/helpers_usage.py` for a full walkthrough leveraging reward funds, RC metrics, ranked posts, and more.
+
+For creating posts and pairing them with options (payout limits, curation flags), see `examples/create_comment.py`.

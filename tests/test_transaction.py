@@ -5,7 +5,13 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from nectarlite.exceptions import TransactionError
-from nectarlite.transaction import Follow, Transaction, Transfer
+from nectarlite.transaction import (
+    CommentOperation,
+    CommentOptionsOperation,
+    Follow,
+    Transaction,
+    Transfer,
+)
 
 
 class TestTransaction(unittest.TestCase):
@@ -94,6 +100,45 @@ class TestTransaction(unittest.TestCase):
 
         serialized = self.tx._serialize_tx()
         self.assertIn(b"STEEM", serialized)
+
+    @patch("nectarlite.transaction.sign")
+    def test_comment_with_options_bundle(self, mock_sign):
+        """Ensure comment and comment_options operations can be bundled in one transaction."""
+
+        mock_signature = bytes([42]) + b"\x01" * 64
+        mock_sign.return_value = mock_signature
+
+        comment = CommentOperation(
+            parent_author="",
+            parent_permlink="hive-12345",
+            author="alice",
+            permlink="hello-hive",
+            title="Hello Hive",
+            body="This is a sample post body.",
+            json_metadata='{"tags": ["hive", "nectarlite"]}',
+        )
+        options = CommentOptionsOperation(
+            author="alice",
+            permlink="hello-hive",
+            max_accepted_payout="1000.000 HBD",
+            percent_steem_dollars=10000,
+            allow_votes=True,
+            allow_curation_rewards=True,
+        )
+
+        self.tx.append_op(comment)
+        self.tx.append_op(options)
+
+        self.tx.sign("5J...")
+
+        tx_dict = self.tx._construct_tx()
+        operations = tx_dict["operations"]
+
+        self.assertEqual(len(operations), 2)
+        self.assertEqual(operations[0][0], "comment")
+        self.assertEqual(operations[1][0], "comment_options")
+        self.assertEqual(operations[0][1]["author"], "alice")
+        self.assertEqual(operations[1][1]["max_accepted_payout"], "1000.000 HBD")
 
 
 class TestFollowOperation(unittest.TestCase):

@@ -149,7 +149,7 @@ class CommentOptionsOperation(Operation):
         author,
         permlink,
         max_accepted_payout,
-        percent_steem_dollars,
+        percent_hbd,
         allow_votes,
         allow_curation_rewards,
         extensions=None,
@@ -161,7 +161,7 @@ class CommentOptionsOperation(Operation):
                 "author": author,
                 "permlink": permlink,
                 "max_accepted_payout": max_accepted_payout,
-                "percent_steem_dollars": percent_steem_dollars,
+                "percent_hbd": percent_hbd,
                 "allow_votes": allow_votes,
                 "allow_curation_rewards": allow_curation_rewards,
                 "extensions": extensions or [],
@@ -184,7 +184,7 @@ class CommentOptionsOperation(Operation):
             bytes(String(self.params["author"]))
             + bytes(String(self.params["permlink"]))
             + bytes(String(self.params["max_accepted_payout"]))
-            + bytes(Uint16(self.params["percent_steem_dollars"]))
+            + bytes(Uint16(self.params["percent_hbd"]))
             + bytes(Bool(self.params["allow_votes"]))
             + bytes(Bool(self.params["allow_curation_rewards"]))
             + bytes(Array(serialized_extensions))
