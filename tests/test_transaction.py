@@ -121,7 +121,7 @@ class TestTransaction(unittest.TestCase):
             author="alice",
             permlink="hello-hive",
             max_accepted_payout="1000.000 HBD",
-            percent_steem_dollars=10000,
+            percent_hbd=10000,
             allow_votes=True,
             allow_curation_rewards=True,
         )
